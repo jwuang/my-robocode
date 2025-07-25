@@ -99,6 +99,19 @@ data class ScannedBotEvent(
 ) : Event()
 
 @Serializable
+@SerialName("ScannedWallEvent")
+data class ScannedWallEvent(
+    override val turnNumber: Int,
+    val scannedByBotId: Int,
+    val scannedWallId: Int,
+    val x: Double,
+    val y: Double,
+    val width: Double,
+    val height: Double,
+    val rotation: Double,
+) : Event()
+
+@Serializable
 @SerialName("TickEventForObserver")
 open class TickEvent(
     override val turnNumber: Int,
@@ -254,6 +267,7 @@ val messageModule = SerializersModule {
         subclass(RoundStartedEvent::class)
         subclass(GamePausedEvent::class)
         subclass(ScannedBotEvent::class)
+        subclass(ScannedWallEvent::class)
         subclass(ServerHandshake::class)
         subclass(StartGame::class)
         subclass(StopGame::class)

@@ -69,6 +69,10 @@ public final class DefaultEventPriority {
      */
     public static final int SCANNED_BOT = 20;
     /**
+     * Event priority for the {@link ScannedWallEvent}
+     */
+    public static final int SCANNED_WALL = 15;
+    /**
      * Event priority for the {@link DeathEvent}
      */
     public static final int DEATH = 10;

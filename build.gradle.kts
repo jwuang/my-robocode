@@ -51,12 +51,12 @@ tasks {
         description = "Builds a release"
         dependsOn(
             "bot-api:java:assemble",     // Bot API for Java VM
-            "bot-api:dotnet:assemble",   // Bot API for .Net
+            //  "bot-api:dotnet:assemble",   // Bot API for .Net
             "booter:assemble",           // Booter (for booting up bots locally)
             "server:assemble",           // Server
             "gui-app:assemble",          // GUI
             "sample-bots:java:zip",      // Sample bots for Java
-            "sample-bots:csharp:zip",    // Sample bots for C#
+            //  "sample-bots:csharp:zip",    // Sample bots for C#
         )
     }
 
@@ -64,7 +64,7 @@ tasks {
         description = "Generate and upload all documentation"
         dependsOn(
             "buildDocs:copyGeneratedDocs",      // Documentation
-            "bot-api:dotnet:copyDotnetApiDocs", // Docfx documentation for .NET Bot API
+            //  "bot-api:dotnet:copyDotnetApiDocs", // Docfx documentation for .NET Bot API
             "bot-api:java:copyJavaApiDocs"      // Javadocs for Java Bot API
         )
     }

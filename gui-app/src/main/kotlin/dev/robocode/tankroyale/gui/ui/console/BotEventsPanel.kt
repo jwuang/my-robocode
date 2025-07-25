@@ -47,6 +47,7 @@ class BotEventsPanel(bot: Participant) : BaseBotConsolePanel(bot) {
                 is BulletHitBulletEvent -> dumpBulletHitBulletEvent(event)
                 is BulletHitWallEvent -> dumpBulletHitWallEvent(event)
                 is ScannedBotEvent -> dumpScannedBotEvent(event)
+                is ScannedWallEvent -> dumpScannedWallEvent(event)
                 else -> dumpUnknownEvent(event)
             }
         }
@@ -177,6 +178,20 @@ class BotEventsPanel(bot: Participant) : BaseBotConsolePanel(bot) {
             appendNewLine(ansi, scannedBotEvent.turnNumber)
         }
     }
+
+    private fun dumpScannedWallEvent(scannedWallEvent: ScannedWallEvent) {
+        if (scannedWallEvent.scannedByBotId == bot.id) {
+            val ansi = createEventAndTurnNumberBuilder(scannedWallEvent)
+                .fieldValue("scannedWallId", botIdAndName(scannedWallEvent.scannedWallId))
+                .fieldValue("x", scannedWallEvent.x)
+                .fieldValue("y", scannedWallEvent.y)
+                .fieldValue("width", scannedWallEvent.width)
+                .fieldValue("height", scannedWallEvent.height)
+                .fieldValue("rotation", scannedWallEvent.rotation)
+            appendNewLine(ansi, scannedWallEvent.turnNumber)
+        }
+    }
+
 
     private fun botIdAndName(botId: Int): String {
         val bot = Client.getParticipant(botId)

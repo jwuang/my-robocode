@@ -34,6 +34,7 @@ final class BotEventHandlers {
     final EventHandler<BulletHitBulletEvent> onBulletHitBullet = new EventHandler<>();
     final EventHandler<BulletHitWallEvent> onBulletHitWall = new EventHandler<>();
     final EventHandler<ScannedBotEvent> onScannedBot = new EventHandler<>();
+    final EventHandler<ScannedWallEvent> onScannedWall = new EventHandler<>();
     final EventHandler<WonRoundEvent> onWonRound = new EventHandler<>();
     final EventHandler<CustomEvent> onCustomEvent = new EventHandler<>();
     final EventHandler<TeamMessageEvent> onTeamMessage = new EventHandler<>();
@@ -69,6 +70,7 @@ final class BotEventHandlers {
         eventHandlerMap.put(BulletHitBulletEvent.class, onBulletHitBullet);
         eventHandlerMap.put(BulletHitWallEvent.class, onBulletHitWall);
         eventHandlerMap.put(ScannedBotEvent.class, onScannedBot);
+        eventHandlerMap.put(ScannedWallEvent.class, onScannedWall);
         eventHandlerMap.put(WonRoundEvent.class, onWonRound);
         eventHandlerMap.put(CustomEvent.class, onCustomEvent);
         eventHandlerMap.put(TeamMessageEvent.class, onTeamMessage);
@@ -96,6 +98,7 @@ final class BotEventHandlers {
         onBulletHitBullet.subscribe(baseBot::onBulletHitBullet);
         onBulletHitWall.subscribe(baseBot::onBulletHitWall);
         onScannedBot.subscribe(baseBot::onScannedBot);
+        onScannedWall.subscribe(baseBot::onScannedWall);
         onWonRound.subscribe(baseBot::onWonRound);
         onCustomEvent.subscribe(baseBot::onCustomEvent);
         onTeamMessage.subscribe(baseBot::onTeamMessage);

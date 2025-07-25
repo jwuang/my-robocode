@@ -1243,7 +1243,18 @@ public interface IBaseBot {
      */
     default void onScannedBot(ScannedBotEvent scannedBotEvent) {
     }
-
+    /**
+     * The event handler triggered when the bot has skipped a turn. This event occurs if the bot did
+     * not take any action in a specific turn. That is, {@link #go} was not called before the turn
+     * timeout occurred for the turn. If the bot does not take action for multiple turns in a row, it
+     * will receive a {@link SkippedTurnEvent} for each turn where it did not take action. When the
+     * bot is skipping a turn, the server did not receive the message from the bot, and the server
+     * will use the newest received instructions for target speed, turn rates, firing, etc.
+     *
+     * @param scannedWallEvent is the event details from the game.
+     */
+    default void onScannedWall(ScannedWallEvent scannedWallEvent) {
+    }
     /**
      * Handles the event triggered when the bot skips a turn.
      * <p>

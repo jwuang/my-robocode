@@ -1,0 +1,35 @@
+$id: scanned-wall-event.schema.yaml
+$schema: https://json-schema.org/draft/2020-12/schema
+description: Event occurring when a bot has scanned a wall
+extends:
+  $ref: event.schema.yaml
+properties:
+  scannedByBotId:
+    description: id of the bot did the scanning
+    type: integer
+  scannedWallId:
+    description: id of the wall that was scanned
+    type: integer
+  x:
+    description: X coordinate of the scanned wall
+    type: number
+  y:
+    description: Y coordinate of the scanned wall
+    type: number
+  width:
+    description: Width of the scanned wall
+    type: number
+  height:
+    description: Height of the scanned wall
+    type: number
+  rotation:
+    description: Rotation of the scanned wall
+    type: number
+required:
+  - scannedByBotId
+  - scannedWallId
+  - x
+  - y
+  - width
+  - height
+  - rotation

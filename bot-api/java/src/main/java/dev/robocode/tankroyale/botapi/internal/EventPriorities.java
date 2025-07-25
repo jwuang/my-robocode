@@ -42,6 +42,7 @@ public final class EventPriorities {
         priorities.put(HitWallEvent.class, HIT_WALL);
         priorities.put(HitBotEvent.class, HIT_BOT);
         priorities.put(ScannedBotEvent.class, SCANNED_BOT);
+        priorities.put(ScannedWallEvent.class, SCANNED_WALL);
         priorities.put(DeathEvent.class, DEATH);
         return priorities;
     }

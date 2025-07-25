@@ -7,10 +7,10 @@ import kotlin.time.Duration.Companion.seconds
 const val DEFAULT_GAME_TYPE = "classic"
 
 /** Default arena width */
-const val DEFAULT_ARENA_WIDTH = 800
+const val DEFAULT_ARENA_WIDTH = 1200
 
 /** Default arena height */
-const val DEFAULT_ARENA_HEIGHT = 600
+const val DEFAULT_ARENA_HEIGHT = 1200
 
 /** Default minimum number of bot participants */
 const val DEFAULT_MIN_NUMBER_OF_PARTICIPANTS = 2

@@ -20,13 +20,13 @@ include("gui-app")
 
 // Bot API
 include("bot-api:java")
-include("bot-api:dotnet")
-include("bot-api:dotnet:schema")
-//include("bot-api:python")
+//  include("bot-api:dotnet")
+//  include("bot-api:dotnet:schema")
+//  include("bot-api:python")
 
 // Sample Bots archives
 include("sample-bots:java")
-include("sample-bots:csharp")
+//  include("sample-bots:csharp")
 
 // Docs
 include("buildDocs")

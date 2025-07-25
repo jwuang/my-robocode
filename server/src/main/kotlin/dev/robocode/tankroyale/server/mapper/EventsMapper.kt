@@ -19,6 +19,7 @@ object EventsMapper {
             is dev.robocode.tankroyale.server.event.BulletHitBulletEvent -> map(event)
             is dev.robocode.tankroyale.server.event.BulletHitWallEvent -> map(event)
             is dev.robocode.tankroyale.server.event.ScannedBotEvent -> map(event)
+            is dev.robocode.tankroyale.server.event.ScannedWallEvent -> map(event)
             is dev.robocode.tankroyale.server.event.SkippedTurnEvent -> map(event)
             is dev.robocode.tankroyale.server.event.TeamMessageEvent -> map(event)
             is dev.robocode.tankroyale.server.event.WonRoundEvent -> map(event)
@@ -117,6 +118,22 @@ object EventsMapper {
             event.y = y
             event.direction = direction
             event.speed = speed
+        }
+        return event
+    }
+
+    private fun map(scannedWallEvent: dev.robocode.tankroyale.server.event.ScannedWallEvent): ScannedWallEvent {
+        val event = ScannedWallEvent()
+        event.type = Message.Type.SCANNED_WALL_EVENT
+        scannedWallEvent.apply {
+            event.turnNumber = turnNumber
+            event.scannedByBotId = scannedByBotId.value
+            event.scannedWallId = scannedWallId
+            event.x = x
+            event.y = y
+            event.width = width
+            event.height = height
+            event.rotation = rotation
         }
         return event
     }

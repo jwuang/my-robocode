@@ -4,12 +4,14 @@ import dev.robocode.tankroyale.client.model.*
 import dev.robocode.tankroyale.gui.client.Client
 import dev.robocode.tankroyale.gui.client.ClientEvents
 import dev.robocode.tankroyale.gui.ui.ResultsFrame
+import dev.robocode.tankroyale.gui.ui.components.RcImages
 import dev.robocode.tankroyale.gui.ui.extensions.ColorExt.hsl
 import dev.robocode.tankroyale.gui.ui.extensions.ColorExt.lightness
 import dev.robocode.tankroyale.gui.ui.fx.Animation
 import dev.robocode.tankroyale.gui.ui.fx.CircleBurst
 import dev.robocode.tankroyale.gui.ui.fx.Explosion
 import dev.robocode.tankroyale.gui.ui.svg.SvgToGraphicsRender
+import dev.robocode.tankroyale.gui.ui.config.WallConfig
 import dev.robocode.tankroyale.gui.util.ColorUtil.Companion.fromString
 import dev.robocode.tankroyale.gui.util.Graphics2DState
 import dev.robocode.tankroyale.gui.util.HslColor
@@ -22,7 +24,10 @@ import java.awt.geom.Ellipse2D
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
+import kotlin.div
 import kotlin.math.sqrt
+import kotlin.text.toInt
+import kotlin.unaryMinus
 
 
 object ArenaPanel : JPanel() {
@@ -42,6 +47,8 @@ object ArenaPanel : JPanel() {
     private val tick = AtomicBoolean(false)
 
     private var scale = 1.0
+
+    private var walls: List<WallState> = WallConfig.MAP4_WALLS
 
     init {
         addMouseWheelListener { e -> if (e != null) onMouseWheel(e) }
@@ -221,12 +228,45 @@ object ArenaPanel : JPanel() {
         g.translate(0, -arenaHeight) // y-axis on screen is translated into y-axis of cartesian coordinate system
 
         drawGround(g)
+        drawWalls(g)
         drawBots(g)
         drawExplosions(g)
         drawBullets(g)
         drawRoundInfo(g)
         drawDebugGraphics(g)
     }
+
+    private fun drawWalls(g: Graphics2D) {
+        walls.forEach { wall ->
+            val oldState = Graphics2DState(g)
+            try {
+                g.color = fromString(wall.color ?: "#888888")
+
+                // 保存当前变换
+                val oldTransform = g.transform
+
+                // 应用墙体变换
+                val at = AffineTransform()
+                at.translate(wall.x, wall.y)
+                at.rotate(Math.toRadians(wall.rotation))
+                g.transform(at)
+
+                // 绘制墙体
+                g.fillRect(
+                    (-wall.width/2).toInt(),
+                    (-wall.height/2).toInt(),
+                    wall.width.toInt(),
+                    wall.height.toInt()
+                )
+
+                // 恢复变换
+                g.transform = oldTransform
+            } finally {
+                oldState.restore(g)
+            }
+        }
+    }
+
 
     private fun drawBots(g: Graphics2D) {
         bots.forEach { bot ->
@@ -264,8 +304,19 @@ object ArenaPanel : JPanel() {
     }
 
     private fun drawGround(g: Graphics) {
-        g.color = Color.BLACK
-        g.fillRect(0, 0, arenaWidth, arenaHeight)
+        val g2d = g as Graphics2D
+        val backgroundImage = RcImages.arenaBackgroundImage
+        // 保存当前变换
+        val oldTransform = g2d.transform
+        try {
+            // 应用垂直翻转变换：将Y轴反转，原点移到顶部
+            g2d.scale(1.0, -1.0)
+            g2d.translate(0.0, -arenaHeight.toDouble())
+            g2d.drawImage(backgroundImage, 0, 0, arenaWidth, arenaHeight, null)
+        } finally {
+            // 恢复原变换
+            g2d.transform = oldTransform
+        }
     }
 
     private fun drawExplosions(g: Graphics2D) {

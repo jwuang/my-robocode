@@ -249,6 +249,7 @@ public final class BotInternals implements IStopResumeListener {
 
     public void rescan() {
         EventInterruption.setInterruptible(ScannedBotEvent.class, true);
+        EventInterruption.setInterruptible(ScannedWallEvent.class, true);
         bot.setRescan();
         bot.go();
     }

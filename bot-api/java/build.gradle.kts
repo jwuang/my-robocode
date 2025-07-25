@@ -60,6 +60,7 @@ jsonSchema2Pojo {
 sourceSets {
     main {
         java {
+            srcDir("src/main/java")
             srcDir(layout.buildDirectory.dir("generated-sources/schema"))
         }
     }

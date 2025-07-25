@@ -10,10 +10,15 @@ import dev.robocode.tankroyale.server.model.Color.Companion.from
 import dev.robocode.tankroyale.server.rules.*
 import dev.robocode.tankroyale.server.score.ScoreTracker
 import dev.robocode.tankroyale.server.Server
+import dev.robocode.tankroyale.server.util.WallConfig
 import java.lang.Math.toDegrees
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /** Maximum bounding circle diameter of a bullet moving with max speed */
 private val bulletMaxBoundingCircleDiameter: Double = 2 * MAX_BULLET_SPEED
@@ -26,7 +31,6 @@ private val bulletMaxBoundingCircleDiameterSquared: Double =
 private const val BOT_BOUNDING_CIRCLE_DIAMETER_SQUARED: Double =
     BOT_BOUNDING_CIRCLE_DIAMETER.toDouble() * BOT_BOUNDING_CIRCLE_DIAMETER
 
-
 /** Model updater, which is used for keeping track of the model state for each turn and round of a game. */
 class ModelUpdater(
     /** Game setup */
@@ -36,7 +40,7 @@ class ModelUpdater(
     /** Initial positions */
     private val initialPositions: Map<BotId, InitialPosition>,
     /** Droid flags */
-    private val droidFlags: Map<BotId, Boolean /* isDroid */>,
+    private val droidFlags: Map<BotId, Boolean /* isDroid */>
 ) {
     /** Score tracking */
     private val scoreTracker = ScoreTracker(participantIds)
@@ -78,6 +82,7 @@ class ModelUpdater(
 
     internal fun isAlive(botId: BotId) = botsMap[botId]?.isAlive ?: false
 
+    private val walls: List<Wall> = WallConfig.MAP4_WALLS
     /**
      * Updates game state.
      * @param botIntents is the bot intents, which gives instructions to the game from the individual bots.
@@ -119,8 +124,7 @@ class ModelUpdater(
         botsMap.clear()
         scoreTracker.clear()
         inactivityCounter = 0
-
-        initializeBotStates()
+        initializeBotStates()               // 修改机器人随即出生地点，避免与墙体碰撞
     }
 
     /** Proceed with the next turn. */
@@ -135,14 +139,16 @@ class ModelUpdater(
 
         executeBotIntents()
 
-        checkAndHandleBotWallCollisions()
+        checkAndHandleArenaWallCollisions()         // 原有竞技场边界机器人碰撞检测
+        checkAndHandleCustomWallCollisions()       // 新增自定义墙体机器人碰撞检测
         checkAndHandleBotCollisions()
         constrainBotPositions()
 
-        checkAndHandleScans()
+        checkAndHandleScans()                       // 修改扫描逻辑，实现遮挡功能
 
         updateBulletPositions()
-        checkAndHandleBulletWallCollisions()
+        checkAndHandleArenaBulletWallCollisions()   // 原有竞技场边界子弹碰撞检测
+        checkAndHandleCustomBulletWallCollisions()  // 新增自定义墙体子弹碰撞检测
         checkAndHandleBulletHits()
 
         checkAndHandleInactivity()
@@ -197,6 +203,11 @@ class ModelUpdater(
 
             val randomPosition = randomBotPosition(occupiedCells)
             val position = adjustForInitialPosition(botId, randomPosition)
+            // 检查是否与墙体碰撞
+            if (isPositionCollidingWithWalls(position)) {
+                // 如果碰撞，重新生成位置
+                return initializeBotStates()
+            }
             // note: body, gun, and radar starts in the same direction
             val randomDirection = randomDirection()
             val direction = adjustForInitialAngle(botId, randomDirection)
@@ -220,6 +231,12 @@ class ModelUpdater(
         }
         // Store bot snapshots into the turn
         turn.copyBots(botsMap.values)
+    }
+
+    private fun isPositionCollidingWithWalls(position: Point): Boolean {
+        return walls.any { wall ->
+            wall.intersectsCircle(position, BOT_BOUNDING_CIRCLE_RADIUS)
+        }
     }
 
     private fun adjustForInitialPosition(botId: BotId, point: Point): Point {
@@ -569,10 +586,53 @@ class ModelUpdater(
         bullets.forEach { bullet -> bullet.incrementTick() }
     }
 
+    private fun checkAndHandleCustomWallCollisions() {
+        if (walls.isEmpty()) return // 如果无墙体则直接返回
+
+        val bots = botsMap.values.toList()
+        val walls = this.walls
+        // 使用空间分区优化检测
+        val spatialPartition = SpatialPartition(walls, gridSize = 20.0)
+
+        for (bot in bots) {
+            val botCenter = bot.position.toPoint()
+            val radius = BOT_BOUNDING_CIRCLE_RADIUS
+
+            // 获取可能相交的墙体（考虑机器人半径和墙体外接圆半径）
+            val potentialWalls = spatialPartition.getWallsNear(
+                botCenter,
+                radius + (walls.maxOfOrNull { it.boundsRadius } ?: 0.0)
+            )
+
+            for (wall in potentialWalls) {
+                if (wall.intersectsCircle(botCenter, radius)) {
+                    handleBotHitCustomWall(bot, wall)
+                    break // 只处理第一个碰撞的墙体
+                }
+            }
+        }
+    }
+    private fun handleBotHitCustomWall(bot: MutableBot, wall: Wall) {
+
+        // 恢复坦克到上一帧的位置，避免穿透墙体
+        val previousState = botsCopies[bot.id]!!
+        bot.x = previousState.x
+        bot.y = previousState.y
+        if (round.lastTurn!!.getEvents(bot.id).none { event -> event is BotHitWallEvent }) {
+
+            val botHitWallEvent = BotHitWallEvent(turn.turnNumber, bot.id)
+            turn.addPrivateBotEvent(bot.id, botHitWallEvent)
+            turn.addObserverEvent(botHitWallEvent)
+
+            bot.addDamage(calcWallDamage(bot.speed))
+        }
+        bot.speed = 0.0
+    }
+
     /** Checks collisions between bots and the walls. */
-    private fun checkAndHandleBotWallCollisions() {
+    private fun checkAndHandleArenaWallCollisions() {
         for (bot in botsMap.values) {
-            val hitWall = adjustBotCoordinatesIfHitWall(bot)
+            val hitWall = adjustBotCoordinatesIfHitArenaWall(bot)
             if (hitWall) {
                 // Omit sending hit-wall-event if the bot hit the wall in the previous turn
                 if (round.lastTurn!!.getEvents(bot.id).none { event -> event is BotHitWallEvent }) {
@@ -593,7 +653,7 @@ class ModelUpdater(
      * Adjust the coordinates of the bot, if it has hit the wall.
      * If the (x,y) coordinate is adjusted, the direction of the bot is used for calculating the new (x,y).
      */
-    private fun adjustBotCoordinatesIfHitWall(bot: MutableBot): Boolean {
+    private fun adjustBotCoordinatesIfHitArenaWall(bot: MutableBot): Boolean {
         var hitWall = false
         if (round.lastTurn != null) {
             val (previousX, previousY) = botsCopies[bot.id]!!.position
@@ -607,8 +667,9 @@ class ModelUpdater(
         return hitWall
     }
 
+
     /** Checks collisions between the bullets and the walls. */
-    private fun checkAndHandleBulletWallCollisions() {
+    private fun checkAndHandleArenaBulletWallCollisions() {
         val iterator = bullets.iterator() // due to removal
         while (iterator.hasNext()) {
             val bullet = iterator.next()
@@ -633,6 +694,40 @@ class ModelUpdater(
                 point.y <= 0 ||
                 point.x >= setup.arenaWidth ||
                 point.y >= setup.arenaHeight
+    }
+
+    private fun checkAndHandleCustomBulletWallCollisions() {
+        val iterator = bullets.iterator()
+        val targetWalls = walls
+        // 使用空间分区优化检测
+        val spatialPartition = SpatialPartition(targetWalls, gridSize = 100.0)
+
+        while (iterator.hasNext()) {
+            val bullet = iterator.next()
+            val bulletLine = Line(
+                bullet.startPosition,
+                bullet.position()
+            )
+
+            val potentialWalls = spatialPartition.getWallsNear(
+                bullet.position(),
+                bullet.startPosition.distanceTo(bullet.position())
+            )
+
+            for (wall in potentialWalls) {
+                if (wall.intersects(bulletLine)) {
+                    handleBulletHitCustomWall(bullet, wall)
+                    iterator.remove()
+                    break // 只处理第一个碰撞的墙体
+                }
+            }
+        }
+    }
+
+    private fun handleBulletHitCustomWall(bullet: MutableBullet, wall: Wall) {
+        val event = BulletHitWallEvent(turn.turnNumber, bullet.copy())
+        turn.addPrivateBotEvent(bullet.botId, event)
+        turn.addObserverEvent(event)
     }
 
     /**
@@ -747,34 +842,57 @@ class ModelUpdater(
         bot.changeEnergy(-firepower)
     }
 
-    /** Checks the scan field for scanned bots. */
+
+    private sealed class ScannedObject {
+        abstract val distance: Double
+    }
+
+    private data class ScannedBot(val bot: IBot, override val distance: Double) : ScannedObject()
+    private data class ScannedWall(val wall: Wall, override val distance: Double) : ScannedObject()
+
+    /** Checks the scan field for scanned bots and walls. */
     private fun checkAndHandleScans() {
         val bots = botsMap.values.toList()
-        for (i in bots.indices) {
-            val scanningBot = bots[i]
 
+        for (scanningBot in bots) {
             if (scanningBot.isDroid) continue // droids cannot use scanning
 
             val (startAngle, endAngle) = getScanAngles(scanningBot)
 
-            for (j in bots.indices) {
-                if (i != j) {
-                    val botBeingScanned = bots[j]
-                    if (isBotScanned(scanningBot, botBeingScanned, startAngle, endAngle)) {
-                        handleScannedBot(scanningBot, botBeingScanned)
+            // 收集所有可扫描到的物体
+            val scannedObjects = mutableListOf<ScannedObject>()
+
+            // 扫描其他机器人
+            for (otherBot in bots) {
+                if (otherBot.id == scanningBot.id) continue
+
+                if (isBotScanned(scanningBot, otherBot, startAngle, endAngle)) {
+                    val distance = scanningBot.position.toPoint().distanceTo(otherBot.position.toPoint())
+                    scannedObjects.add(ScannedBot(otherBot, distance))
+                }
+            }
+
+            // 扫描墙体
+            for (wall in walls) {
+                if (isWallScanned(scanningBot, wall, startAngle, endAngle)) {
+                    val distanceToCenter = scanningBot.position.toPoint().distanceTo(wall.position())
+                    val distance = (distanceToCenter - wall.boundsRadius).coerceAtLeast(0.0)
+                    scannedObjects.add(ScannedWall(wall, distance))
+                }
+            }
+
+            // 只处理最近的物体（实现遮挡效果）
+            scannedObjects.minByOrNull { it.distance }?.let { closest ->
+                when (closest) {
+                    is ScannedBot -> {
+                        createAndAddScannedBotEventToTurn(scanningBot.id, closest.bot)
+                    }
+                    is ScannedWall -> {
+                        createAndAddScannedWallEventToTurn(scanningBot.id, closest.wall)
                     }
                 }
             }
         }
-    }
-
-    /**
-     * Handle scanned bot.
-     * @param scanningBot the bot scanning an opponent bot.
-     * @param botBeingScanned the bot being scanned.
-     */
-    private fun handleScannedBot(scanningBot: MutableBot, botBeingScanned: IBot) {
-        createAndAddScannedBotEventToTurn(scanningBot.id, botBeingScanned)
     }
 
     /**
@@ -797,6 +915,23 @@ class ModelUpdater(
                 scanningBot.position, RADAR_RADIUS,
                 scanStartAngle, scanEndAngle
             )
+
+    private fun isWallScanned(
+        scanningBot: IBot,
+        wall: Wall,
+        scanStartAngle: Double,
+        scanEndAngle: Double
+    ): Boolean {
+        return isScanningOrMoving(scanningBot.id) &&
+                isCircleIntersectingCircleSector(
+                    wall.position(),
+                    wall.boundsRadius,
+                    scanningBot.position,
+                    RADAR_RADIUS,
+                    scanStartAngle,
+                    scanEndAngle
+                )
+    }
 
     /**
      * Checks if a bot is scanning, meaning that it must be either rescanning or moving.
@@ -852,6 +987,21 @@ class ModelUpdater(
         turn.addObserverEvent(scannedBotEvent)
     }
 
+    private fun createAndAddScannedWallEventToTurn(scanningBotId: BotId, scannedWall: Wall) {
+        val scannedWallEvent = ScannedWallEvent(
+            turnNumber = turn.turnNumber,
+            scannedByBotId = scanningBotId,
+            scannedWallId = scannedWall.id,
+            x = scannedWall.x,
+            y = scannedWall.y,
+            width = scannedWall.width,
+            height = scannedWall.height,
+            rotation = scannedWall.rotation
+        )
+        turn.addPrivateBotEvent(scanningBotId, scannedWallEvent)
+        turn.addObserverEvent(scannedWallEvent)
+    }
+
     /**
      * Returns the scan angles for a bot.
      * @param bot is the bot.
@@ -891,7 +1041,7 @@ class ModelUpdater(
 
                 val scores = scoreCalculator.getScores()
                 if (scores.isNotEmpty()) {
-                    val winners = scores.filter { it.rank == 1 }
+                    val winners = scores.filter { it.rank == 1}
                     winners.forEach {
                         val botId = it.participantId.botId
                         turn.addPrivateBotEvent(botId, WonRoundEvent(turn.turnNumber))
@@ -1118,4 +1268,68 @@ class ModelUpdater(
             }
         }
     }
+    /** 空间布局分割优化碰撞检测 */
+    private class SpatialPartition(walls: List<Wall>, private val gridSize: Double) {
+        private val grid = mutableMapOf<Pair<Int, Int>, MutableList<Wall>>()
+
+        init {
+            walls.forEach { addWall(it) }
+        }
+
+        private fun addWall(wall: Wall) {
+            // 计算矩形墙体的对角距离作为影响半径
+            val halfDiagonal = sqrt(wall.width.pow(2) + wall.height.pow(2)) / 2
+            val (minX, maxX, minY, maxY) = quadrants(
+                wall.x - halfDiagonal,
+                wall.x + halfDiagonal,
+                wall.y - halfDiagonal,
+                wall.y + halfDiagonal
+            )
+
+            // 将墙体添加到覆盖的所有网格单元中
+            for (x in minX..maxX) {
+                for (y in minY..maxY) {
+                    grid.getOrPut(Pair(x, y)) { mutableListOf() }.add(wall)
+                }
+            }
+        }
+
+        /**
+         * 获取指定点附近可能发生碰撞的墙体列表
+         * @param point 中心点坐标
+         * @param radius 搜索半径
+         * @return 可能发生碰撞的墙体列表
+         */
+        fun getWallsNear(point: Point, radius: Double): List<Wall> {
+            val (minX, maxX, minY, maxY) = quadrants(
+                point.x - radius,
+                point.x + radius,
+                point.y - radius,
+                point.y + radius
+            )
+
+            val result = mutableSetOf<Wall>()
+            for (x in minX..maxX) {
+                for (y in minY..maxY) {
+                    grid[Pair(x, y)]?.let { result.addAll(it) }
+                }
+            }
+            return result.toList()
+        }
+
+        /**
+         * 计算坐标范围对应的网格单元范围
+         * @return 四元组(minGridX, maxGridX, minGridY, maxGridY)
+         */
+        private fun quadrants(x1: Double, x2: Double, y1: Double, y2: Double): Quadruple<Int, Int, Int, Int> {
+            return Quadruple(
+                floor(x1 / gridSize).toInt(),
+                ceil(x2 / gridSize).toInt(),
+                floor(y1 / gridSize).toInt(),
+                ceil(y2 / gridSize).toInt()
+            )
+        }
+    }
+
+    private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 }
