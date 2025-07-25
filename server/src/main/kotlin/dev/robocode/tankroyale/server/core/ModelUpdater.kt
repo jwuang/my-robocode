@@ -988,6 +988,11 @@ class ModelUpdater(
     }
 
     private fun createAndAddScannedWallEventToTurn(scanningBotId: BotId, scannedWall: Wall) {
+        // 检查 botId 是否存在于 participantIds 中
+        if (!participantIds.any { it.botId == scanningBotId }) {
+            println("ScannedWallEvent generated for non-existent botId: $scanningBotId")
+            return
+        }
         val scannedWallEvent = ScannedWallEvent(
             turnNumber = turn.turnNumber,
             scannedByBotId = scanningBotId,

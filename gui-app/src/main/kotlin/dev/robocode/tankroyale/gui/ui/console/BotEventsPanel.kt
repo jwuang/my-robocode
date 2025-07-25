@@ -182,7 +182,7 @@ class BotEventsPanel(bot: Participant) : BaseBotConsolePanel(bot) {
     private fun dumpScannedWallEvent(scannedWallEvent: ScannedWallEvent) {
         if (scannedWallEvent.scannedByBotId == bot.id) {
             val ansi = createEventAndTurnNumberBuilder(scannedWallEvent)
-                .fieldValue("scannedWallId", botIdAndName(scannedWallEvent.scannedWallId))
+                .fieldValue("scannedWallId", scannedWallEvent.scannedWallId)
                 .fieldValue("x", scannedWallEvent.x)
                 .fieldValue("y", scannedWallEvent.y)
                 .fieldValue("width", scannedWallEvent.width)

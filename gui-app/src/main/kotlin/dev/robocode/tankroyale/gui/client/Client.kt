@@ -176,8 +176,12 @@ object Client {
 
     val joinedBots: Set<BotInfo> get() = bots
 
-    fun getParticipant(botId: Int): Participant = participants.first { participant -> participant.id == botId }
-
+    fun getParticipant(botId: Int): Participant =
+        participants.firstOrNull { it.id == botId }
+            ?: run {
+                println("Cannot find participant with botId=$botId, participants=$participants")
+                throw IllegalArgumentException("No participant found for botId=$botId")
+            }
     fun getStandardOutput(botId: Int): Map<Int /* round */, Map<Int /* turn */, String>>? = savedStdOutput[botId]
 
     fun getStandardError(botId: Int): Map<Int /* round */, Map<Int /* turn */, String>>? = savedStdError[botId]
