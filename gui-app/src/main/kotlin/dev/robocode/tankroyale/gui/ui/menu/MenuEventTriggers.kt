@@ -16,6 +16,7 @@ object MenuEventTriggers {
     val onSoundConfig = MenuEvent()
     val onHelp = MenuEvent()
     val onAbout = MenuEvent()
+    val onLiveScoreBoard = MenuEvent()
 }
 
 class MenuEvent : Event<JMenuItem>()

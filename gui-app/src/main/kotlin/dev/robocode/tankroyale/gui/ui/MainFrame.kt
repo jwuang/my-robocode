@@ -13,12 +13,14 @@ import dev.robocode.tankroyale.gui.ui.control.ControlEventHandlers
 import dev.robocode.tankroyale.gui.ui.control.ControlPanel
 import dev.robocode.tankroyale.gui.ui.extensions.WindowExt.onClosing
 import dev.robocode.tankroyale.gui.ui.server.ServerEvents
+import dev.robocode.tankroyale.gui.ui.UIManager
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
 object MainFrame : RcFrame("main_frame") {
 
     init {
+        UIManager.initialize()
         defaultCloseOperation = EXIT_ON_CLOSE
 
         setSize(1050, 800)

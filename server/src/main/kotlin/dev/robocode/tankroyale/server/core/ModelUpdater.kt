@@ -6,10 +6,12 @@ import dev.robocode.tankroyale.server.score.AccumulatedScoreCalculator
 import dev.robocode.tankroyale.server.score.ScoreCalculator
 import dev.robocode.tankroyale.server.event.*
 import dev.robocode.tankroyale.server.model.*
+import dev.robocode.tankroyale.server.model.TickScore
 import dev.robocode.tankroyale.server.model.Color.Companion.from
 import dev.robocode.tankroyale.server.rules.*
 import dev.robocode.tankroyale.server.score.ScoreTracker
 import dev.robocode.tankroyale.server.Server
+import dev.robocode.tankroyale.server.score.RankDecorator
 import dev.robocode.tankroyale.server.util.WallConfig
 import java.lang.Math.toDegrees
 import java.util.*
@@ -76,6 +78,14 @@ class ModelUpdater(
 
     /** The accumulated results ordered with higher total scores first */
     internal fun getResults() = accumulatedScoreCalculator.getScores()
+
+    /** The current tick scores ordered with higher total scores first */
+    internal fun getTickScores(): List<TickScore> {
+        val scores = participantIds.map { scoreTracker.calculateScore(it) }
+        RankDecorator.updateRanks(scores)
+        return scores.map { TickScore(it) }
+            .sortedByDescending { it.totalScore }
+    }
 
     /** The number of rounds played so far */
     internal val numberOfRounds: Int get() = gameState.rounds.size

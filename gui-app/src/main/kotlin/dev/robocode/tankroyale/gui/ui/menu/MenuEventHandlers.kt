@@ -61,6 +61,9 @@ object MenuEventHandlers {
             onAbout.subscribe(this) {
                 AboutBox.isVisible = true
             }
+            onLiveScoreBoard.subscribe(this) {
+                dev.robocode.tankroyale.gui.ui.UIManager.showLiveScoreFrame()
+            }
         }
     }
 
