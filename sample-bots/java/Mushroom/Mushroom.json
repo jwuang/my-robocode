@@ -1,10 +1,10 @@
 {
-  "name": "My First Bot",
+  "name": "Mushroom",
   "version": "1.0",
   "authors": [
-    "GG.bond"
+    "Fu San"
   ],
-  "description": "competitor",
+  "description": "This bot moves around in a crazy pattern.",
   "homepage": "",
   "countryCodes": [
     "cn"

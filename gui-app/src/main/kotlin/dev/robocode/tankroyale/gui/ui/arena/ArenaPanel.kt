@@ -48,7 +48,7 @@ object ArenaPanel : JPanel() {
 
     private var scale = 1.0
 
-    private var walls: List<WallState> = WallConfig.MAP4_WALLS
+    private var walls: List<WallState> = WallConfig.MAP2_WALLS
 
     init {
         addMouseWheelListener { e -> if (e != null) onMouseWheel(e) }
@@ -228,7 +228,7 @@ object ArenaPanel : JPanel() {
         g.translate(0, -arenaHeight) // y-axis on screen is translated into y-axis of cartesian coordinate system
 
         drawGround(g)
-        drawWalls(g)
+        // drawWalls(g)
         drawBots(g)
         drawExplosions(g)
         drawBullets(g)

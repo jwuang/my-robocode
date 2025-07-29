@@ -1,5 +1,9 @@
 package dev.robocode.tankroyale.server.rules
 
+/**
+ * 子弹/碰撞/生存/生存消耗得分设定，进攻得分目前相对较高，生存得分较低
+ */
+
 /** Arena minimum size (width / height) */
 const val ARENA_MIN_SIZE = 400
 
@@ -13,10 +17,10 @@ const val MIN_GUN_COOLING_RATE = 0.1
 const val MAX_GUN_COOLING_RATE = 3.0
 
 /** Initial bot energy level */
-const val INITIAL_BOT_ENERGY = 100.0
+const val INITIAL_BOT_ENERGY = 300.0
 
 /** Initial droid bot energy level */
-const val INITIAL_DROID_ENERGY = 120.0
+const val INITIAL_DROID_ENERGY = 520.0
 
 /** Initial gun heat */
 const val INITIAL_GUN_HEAT = 3.0
@@ -64,31 +68,31 @@ const val ACCELERATION = 1.0
 const val DECELERATION = -2.0
 
 /** Ram damage */
-const val RAM_DAMAGE = 0.6
+const val RAM_DAMAGE = 4.0  // 0.6
 
 /** Energy gain factor, when bullet hits */
 const val BULLET_HIT_ENERGY_GAIN_FACTOR = 3
 
 /** Score per survival */
-const val SCORE_PER_SURVIVAL = 50.0
+const val SCORE_PER_SURVIVAL = 20.0
 
 /** Bonus for last survival */
-const val BONUS_PER_LAST_SURVIVOR = 10.0
+const val BONUS_PER_LAST_SURVIVOR = 20.0
 
 /** Score per bullet damage */
-const val SCORE_PER_BULLET_DAMAGE = 1.0
+const val SCORE_PER_BULLET_DAMAGE = 2.0    // 1.0
 
 /** Bonus per bullet kill */
-const val BONUS_PER_BULLET_KILL = 0.20
+const val BONUS_PER_BULLET_KILL = 0.6
 
 /** Score per ram damage */
-const val SCORE_PER_RAM_DAMAGE = 2.0
+const val SCORE_PER_RAM_DAMAGE = 4.0
 
 /** Bonus per ram kill */
-const val BONUS_PER_RAM_KILL = 0.30
+const val BONUS_PER_RAM_KILL = 0.6
 
 /** Inactivity punishment damage per turn */
-const val INACTIVITY_DAMAGE = 0.1
+const val INACTIVITY_DAMAGE = 3.0    // 0.1,需要其他参数对比
 
 /** Max. number of characters allowed for a team message */
 const val MAX_TEAM_MESSAGE_SIZE = 4096

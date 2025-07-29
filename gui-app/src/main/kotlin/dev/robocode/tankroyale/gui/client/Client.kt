@@ -16,10 +16,12 @@ import dev.robocode.tankroyale.gui.client.ClientEvents.onTickEvent
 import dev.robocode.tankroyale.gui.settings.ConfigSettings
 import dev.robocode.tankroyale.gui.settings.GamesSettings
 import dev.robocode.tankroyale.gui.settings.ServerSettings
+import dev.robocode.tankroyale.gui.ui.UIManager
 import dev.robocode.tankroyale.gui.ui.server.ServerEvents
 import dev.robocode.tankroyale.gui.ui.tps.TpsEvents
 import dev.robocode.tankroyale.common.util.Version
 import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.json.*
 import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -208,6 +210,20 @@ object Client {
 
     private fun onMessage(msg: String) {
 //        println("msg: $msg")
+        // Check if this is a TickEvent with tickScores
+        try {
+            val jsonObject = kotlinx.serialization.json.Json.parseToJsonElement(msg).jsonObject
+            if (jsonObject.containsKey("type") &&
+                "TickEventForObserver" == jsonObject["type"]?.jsonPrimitive?.content &&
+                jsonObject.containsKey("tickScores")) {
+                // Forward to UI manager
+                dev.robocode.tankroyale.gui.ui.UIManager.updateLiveScores(msg)
+            }
+        } catch (e: Exception) {
+            // Ignore parsing errors
+        }
+
+
         when (val type = json.decodeFromString(PolymorphicSerializer(Message::class), msg)) {
             is TickEvent -> handleTickEvent(type)
             is ServerHandshake -> handleServerHandshake(type)

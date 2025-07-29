@@ -576,10 +576,22 @@ class GameServer(
             enemyCountMap[botId] = aliveBotTeamIds.filterValues { it != teamId }.count()
         }
 
-        broadcastToObserverAndControllers(
-            TurnToTickEventForObserverMapper
-                .map(roundNumber, turn, participantMap, enemyCountMap, debugGraphicsEnableMap)
-        )
+        val tickEvent = TurnToTickEventForObserverMapper
+            .map(roundNumber, turn, participantMap, enemyCountMap, debugGraphicsEnableMap)
+
+        // Send score updates every 20 ticks to reduce overhead
+
+            val json = gson.toJson(tickEvent)
+            val jsonObject = gson.fromJson(json, com.google.gson.JsonObject::class.java)
+
+            // Add tick scores to the JSON object
+            modelUpdater?.getTickScores()?.let { tickScores ->
+                jsonObject.add("tickScores", TickScoreMapper.mapToJson(tickScores))
+                // log.info("Sending tick scores for turn: ${turn.turnNumber}, scores count: ${tickScores.size}")
+            }
+
+            broadcastToObserverAndControllers(jsonObject.toString())
+
     }
 
     private fun checkForSkippedTurns(currentTurnNumber: Int) {
@@ -636,6 +648,10 @@ class GameServer(
                 // Bot cannot receive events and send new intents.
             }
         }
+    }
+
+    private fun broadcastToObserverAndControllers(json: String) {
+        connectionHandler.broadcastToObserverAndControllers(json)
     }
 
     private fun broadcastToObserverAndControllers(msg: Message) {

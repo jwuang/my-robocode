@@ -45,6 +45,14 @@ class ScoreTracker(private val participantIds: Set<ParticipantId>) {
             val survivalCount = scoreAndDamage?.survivalCount ?: 0
             val lastSurvivorCount = scoreAndDamage?.lastSurvivorCount ?: 0
 
+            // 计算新的lastSurvivorBonus，所有最后幸存者均分奖励
+            val lastSurvivorBonusValue = if (lastSurvivors != null && participantId in lastSurvivors!!) {
+                val totalBonus = calculateBonusPerLastSurvivor(participantIds.size)
+                totalBonus / lastSurvivors!!.size
+            } else {
+                0.0
+            }
+
             return Score(
                 participantId = participantId,
                 bulletDamageScore = SCORE_PER_BULLET_DAMAGE * getTotalBulletDamage(),
@@ -52,7 +60,7 @@ class ScoreTracker(private val participantIds: Set<ParticipantId>) {
                 ramDamageScore = SCORE_PER_RAM_DAMAGE * getTotalRamDamage(),
                 ramKillBonus = BONUS_PER_RAM_KILL * getRamKillEnemyIds().sumOf { getTotalDamage(it) },
                 survivalScore = SCORE_PER_SURVIVAL * survivalCount,
-                lastSurvivorBonus = BONUS_PER_LAST_SURVIVOR * lastSurvivorCount,
+                lastSurvivorBonus = lastSurvivorBonusValue,
             )
         }
     }
@@ -105,7 +113,7 @@ class ScoreTracker(private val participantIds: Set<ParticipantId>) {
                     lastSurvivors = when (size) {
                         0 -> recentSurvivors
                         1 -> aliveParticipants
-                        else -> null
+                        else -> aliveParticipants.takeIf { !recentSurvivors.containsAll(aliveParticipants) }
                     }
                     lastSurvivors?.forEach { scoreAndDamages[it]?.addLastSurvivorCount(deadCount) }
                 }
@@ -116,4 +124,8 @@ class ScoreTracker(private val participantIds: Set<ParticipantId>) {
     private fun getScoreAndDamage(participantId: ParticipantId): ScoreAndDamage =
         (scoreAndDamages[participantId]
             ?: throw IllegalStateException("No score record for teamOrBotId: $participantId)"))
+            
+    private fun calculateBonusPerLastSurvivor(totalParticipants: Int): Double {
+        return BONUS_PER_LAST_SURVIVOR * totalParticipants
+    }
 }

@@ -6,10 +6,12 @@ import dev.robocode.tankroyale.server.score.AccumulatedScoreCalculator
 import dev.robocode.tankroyale.server.score.ScoreCalculator
 import dev.robocode.tankroyale.server.event.*
 import dev.robocode.tankroyale.server.model.*
+import dev.robocode.tankroyale.server.model.TickScore
 import dev.robocode.tankroyale.server.model.Color.Companion.from
 import dev.robocode.tankroyale.server.rules.*
 import dev.robocode.tankroyale.server.score.ScoreTracker
 import dev.robocode.tankroyale.server.Server
+import dev.robocode.tankroyale.server.score.RankDecorator
 import dev.robocode.tankroyale.server.util.WallConfig
 import java.lang.Math.toDegrees
 import java.util.*
@@ -76,6 +78,14 @@ class ModelUpdater(
 
     /** The accumulated results ordered with higher total scores first */
     internal fun getResults() = accumulatedScoreCalculator.getScores()
+
+    /** The current tick scores ordered with higher total scores first */
+    internal fun getTickScores(): List<TickScore> {
+        val scores = participantIds.map { scoreTracker.calculateScore(it) }
+        RankDecorator.updateRanks(scores)
+        return scores.map { TickScore(it) }
+            .sortedByDescending { it.totalScore }
+    }
 
     /** The number of rounds played so far */
     internal val numberOfRounds: Int get() = gameState.rounds.size
@@ -275,17 +285,108 @@ class ModelUpdater(
      * @return a random bot position
      */
     private fun randomBotPosition(occupiedCells: MutableSet<Int>): Point {
-        val gridWidth = setup.arenaWidth / 50
-        val gridHeight = setup.arenaHeight / 50
-        val cellCount = gridWidth * gridHeight
-        val numBots = participantIds.size
-        require(cellCount >= numBots) {
-            "Area size (${setup.arenaWidth},${setup.arenaHeight}) is too small to contain $numBots bots"
-        }
-        val cellWidth = setup.arenaWidth / gridWidth
-        val cellHeight = setup.arenaHeight / gridHeight
+        // 根据墙体配置选择不同的出生点
+        val predefinedPositions = getSpawnPointsForCurrentWalls()
+        
+        // 随机选择一个未被占用的位置
+        val availablePositions = predefinedPositions.filterIndexed { index, _ -> !occupiedCells.contains(index) }
+        
+        if (availablePositions.isEmpty()) {
+            println("出生位置已经全部被占用，请检查墙体配置")
+            // 如果所有预定义位置都被占用，则回退到原来的随机生成逻辑
+            val gridWidth = setup.arenaWidth / 50
+            val gridHeight = setup.arenaHeight / 50
+            val cellCount = gridWidth * gridHeight
+            val numBots = participantIds.size
+            require(cellCount >= numBots) {
+                "Area size (${setup.arenaWidth},${setup.arenaHeight}) is too small to contain $numBots bots"
+            }
+            val cellWidth = setup.arenaWidth / gridWidth
+            val cellHeight = setup.arenaHeight / gridHeight
 
-        return randomBotPoint(occupiedCells, cellCount, gridWidth, cellWidth, cellHeight)
+            return randomBotPoint(occupiedCells, cellCount, gridWidth, cellWidth, cellHeight)
+        }
+        
+        // 从可用位置中随机选择一个
+        val selectedPosition = availablePositions.random()
+        
+        // 标记该位置已被占用
+        val selectedIndex = predefinedPositions.indexOf(selectedPosition)
+        occupiedCells.add(selectedIndex)
+        
+        return selectedPosition
+    }
+    
+    /**
+     * 根据当前墙体配置获取预定义的出生点
+     * @return 预定义的出生点列表
+     */
+    private fun getSpawnPointsForCurrentWalls(): List<Point> {
+        return when {
+            walls === WallConfig.MAP1_WALLS -> {
+                // MAP1墙体配置的出生点
+                listOf(
+                    Point(350.0, 1090.0),
+                    Point(850.0, 1090.0),
+                    Point(120.0, 850.0),
+                    Point(1080.0, 850.0),
+                    Point(150.0, 350.0),
+                    Point(1050.0, 350.0),
+                    Point(350.0, 110.0),
+                    Point(850.0, 110.0)
+                )
+            }
+            walls === WallConfig.MAP2_WALLS -> {
+                // MAP2墙体配置的出生点
+                listOf(
+                    Point(345.0, 1115.0),
+                    Point(855.0, 1115.0),
+                    Point(130.0, 800.0),
+                    Point(130.0, 400.0),
+                    Point(1070.0, 800.0),
+                    Point(1070.0, 400.0),
+                    Point(855.0, 85.0),
+                    Point(345.0, 85.0)
+                )
+            }
+            walls === WallConfig.MAP3_WALLS -> {
+                // MAP3墙体配置的出生点
+                listOf(
+                    Point(350.0, 1025.0),
+                    Point(850.0, 1025.0),
+                    Point(120.0, 600.0),
+                    Point(1080.0, 600.0),
+                    Point(350.0, 175.0),
+                    Point(850.0, 175.0)
+                )
+            }
+            walls === WallConfig.MAP4_WALLS -> {
+                // MAP4墙体配置的出生点
+                listOf(
+                    Point(600.0, 1140.0),
+                    Point(600.0, 60.0),
+                    Point(200.0, 1000.0),
+                    Point(1000.0, 1000.0),
+                    Point(60.0, 600.0),
+                    Point(1140.0, 600.0),
+                    Point(200.0, 200.0),
+                    Point(1000.0, 200.0)
+                )
+            }
+            else -> {
+                // 默认出生点配置
+                listOf(
+                    Point(BOT_BOUNDING_CIRCLE_RADIUS + 50.0, BOT_BOUNDING_CIRCLE_RADIUS + 50.0),
+                    Point(setup.arenaWidth - BOT_BOUNDING_CIRCLE_RADIUS - 50.0, BOT_BOUNDING_CIRCLE_RADIUS + 50.0),
+                    Point(BOT_BOUNDING_CIRCLE_RADIUS + 50.0, setup.arenaHeight - BOT_BOUNDING_CIRCLE_RADIUS - 50.0),
+                    Point(setup.arenaWidth - BOT_BOUNDING_CIRCLE_RADIUS - 50.0, setup.arenaHeight - BOT_BOUNDING_CIRCLE_RADIUS - 50.0),
+                    Point(setup.arenaWidth / 2.0, BOT_BOUNDING_CIRCLE_RADIUS + 50.0),
+                    Point(setup.arenaWidth / 2.0, setup.arenaHeight - BOT_BOUNDING_CIRCLE_RADIUS - 50.0),
+                    Point(BOT_BOUNDING_CIRCLE_RADIUS + 50.0, setup.arenaHeight / 2.0),
+                    Point(setup.arenaWidth - BOT_BOUNDING_CIRCLE_RADIUS - 50.0, setup.arenaHeight / 2.0)
+                )
+            }
+        }
     }
 
     /** Execute bot intents for all bots that are not disabled */

@@ -30,7 +30,7 @@ public final class Constants {
      * of the radar is a circle arc ("pizza slice") starting from the center of the bot. Opponent bots
      * that get inside the scan arc will be detected by the radar.
      *
-     * <p>The radius of the arc is a constant of {@value} units. This means that that the radar will
+     * <p>The radius of the arc is a constant of {@value} units. This means that the radar will
      * not be able to detect bots that are more than {@value} units away from the bot.
      *
      * <p>The radar needs to be turned (left or right) to scan opponent bots. So make sure the radar

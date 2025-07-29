@@ -6,6 +6,7 @@ import dev.robocode.tankroyale.gui.ui.menu.MenuEventTriggers.onServerConfig
 import dev.robocode.tankroyale.gui.ui.menu.MenuEventTriggers.onSetupRules
 import dev.robocode.tankroyale.gui.ui.menu.MenuEventTriggers.onShowServerLog
 import dev.robocode.tankroyale.gui.ui.menu.MenuEventTriggers.onStartBattle
+import dev.robocode.tankroyale.gui.ui.menu.MenuEventTriggers.onLiveScoreBoard
 import dev.robocode.tankroyale.gui.server.ServerProcess
 import dev.robocode.tankroyale.gui.ui.MenuTitles
 import dev.robocode.tankroyale.gui.ui.extensions.JMenuExt.addNewMenuItem
@@ -33,6 +34,7 @@ object Menu : JMenuBar() {
         MenuEventHandlers
 
         setupBattleMenu()
+        setupViewMenu()
         setupServerMenu()
         setupConfigMenu()
         setupHelpMenu()
@@ -55,6 +57,17 @@ object Menu : JMenuBar() {
             addNewMenuItem("item.setup_rules", onSetupRules).apply {
                 mnemonic = KeyEvent.VK_R
                 accelerator = ctrlDown(mnemonic)
+            }
+        })
+    }
+
+    private fun setupViewMenu() {
+        add(JMenu(MenuTitles.get("menu.view")).apply {
+            mnemonic = KeyEvent.VK_V
+
+            addNewMenuItem("item.live_score_board", onLiveScoreBoard).apply {
+                mnemonic = KeyEvent.VK_L
+                accelerator = ctrlDown(KeyEvent.VK_L)
             }
         })
     }
