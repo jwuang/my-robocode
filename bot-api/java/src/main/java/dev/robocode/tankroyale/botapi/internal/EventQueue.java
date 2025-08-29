@@ -24,7 +24,7 @@ import static java.lang.Integer.MIN_VALUE;
  */
 final class EventQueue {
 
-    private static final int MAX_QUEUE_SIZE = 256;
+    private static final int MAX_QUEUE_SIZE = 4096;
     private static final int MAX_EVENT_AGE = 2;
 
     private final BaseBotInternals baseBotInternals;

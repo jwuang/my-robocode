@@ -81,15 +81,15 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
             }
         })
         subscribeToEvents()
+        
+        // 如果窗口在比赛已经开始后打开，则需要获取当前的参与者信息
+        updateParticipantsFromCurrentGame()
     }
 
     private fun subscribeToEvents() {
         // Listen for participant information
         ClientEvents.onGameStarted.subscribe(this) { event ->
-            participants.clear()
-            event.participants.forEach { participant ->
-                participants[participant.id] = participant
-            }
+            updateParticipants(event.participants)
             // 新比赛开始时清空之前的数据
             clearScores()
             // 重置更新时间，确保新比赛开始时能立即显示数据
@@ -105,6 +105,25 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
                 updateTableWithScoresImmediately(scores)
                 pendingTickScores = null
             }
+        }
+    }
+    
+    fun updateParticipants(participantsList: List<Participant>) {
+        participants.clear()
+        participantsList.forEach { participant ->
+            participants[participant.id] = participant
+        }
+        // 更新参与者信息后，如果有待处理的分数数据，则立即更新表格
+        pendingTickScores?.let { scores ->
+            updateTableWithScoresImmediately(scores)
+        }
+    }
+    
+    // 当窗口在比赛已经开始后打开时，需要获取当前比赛的参与者信息
+    private fun updateParticipantsFromCurrentGame() {
+        val currentParticipants = UIManager.getCurrentParticipants()
+        if (currentParticipants.isNotEmpty()) {
+            updateParticipants(currentParticipants)
         }
     }
 

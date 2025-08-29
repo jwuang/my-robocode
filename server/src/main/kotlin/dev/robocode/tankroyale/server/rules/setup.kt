@@ -16,7 +16,7 @@ const val DEFAULT_ARENA_HEIGHT = 1200
 const val DEFAULT_MIN_NUMBER_OF_PARTICIPANTS = 2
 
 /** Default number of rounds */
-const val DEFAULT_NUMBER_OF_ROUNDS = 35
+const val DEFAULT_NUMBER_OF_ROUNDS = 1
 
 /** Default gun cooling rate */
 const val DEFAULT_GUN_COOLING_RATE = 0.1

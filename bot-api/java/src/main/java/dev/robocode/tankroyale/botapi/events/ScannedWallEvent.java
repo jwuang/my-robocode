@@ -33,8 +33,8 @@ public final class ScannedWallEvent extends BotEvent{
      * @param turnNumber        is the turn number when the bot was scanned.
      * @param scannedByBotId    is the id of the bot did the scanning.
      * @param scannedWallId     is the id of the wall that was scanned.
-     * @param x                 is the X coordinate of the scanned wall.
-     * @param y                 is the Y coordinate of the scanned wall.
+     * @param x                 is the X coordinate of the center of the scanned wall.
+     * @param y                 is the Y coordinate of the center of the scanned wall.
      * @param width             is the width of the scanned wall.
      * @param height            is the height of the scanned wall.
      * @param rotation          is the rotation of the scanned wall.
@@ -114,7 +114,7 @@ public final class ScannedWallEvent extends BotEvent{
     /**
      * Returns the rotation of the scanned wall.
      *
-     * @return The height of the scanned wall.
+     * @return The rotation of the scanned wall.
      */
     public double getRotation(){return rotation;}
 }

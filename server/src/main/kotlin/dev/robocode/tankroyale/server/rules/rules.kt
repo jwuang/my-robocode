@@ -1,7 +1,7 @@
 package dev.robocode.tankroyale.server.rules
 
 /**
- * 子弹/碰撞/生存/生存消耗得分设定，进攻得分目前相对较高，生存得分较低
+ * 子弹/碰撞/移动/扫描/生存消耗得分设定，进攻得分目前相对较高，生存得分较低
  */
 
 /** Arena minimum size (width / height) */
@@ -68,7 +68,7 @@ const val ACCELERATION = 1.0
 const val DECELERATION = -2.0
 
 /** Ram damage */
-const val RAM_DAMAGE = 4.0  // 0.6
+const val RAM_DAMAGE = 3.0  // 0.6
 
 /** Energy gain factor, when bullet hits */
 const val BULLET_HIT_ENERGY_GAIN_FACTOR = 3
@@ -99,3 +99,12 @@ const val MAX_TEAM_MESSAGE_SIZE = 4096
 
 /** Max. number of team messages per turn */
 const val MAX_NUMBER_OF_TEAM_MESSAGES_PER_TURN = 5
+
+/** Movement penalty */
+const val MOVEMENT_PENALTY = -0.05
+
+/** Radar penalty */
+const val RADAR_PENALTY = -0.02
+
+/** Turn around penalty */
+const val TURN_AROUND_PENALTY = -0.03

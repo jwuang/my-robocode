@@ -402,10 +402,24 @@ class ModelUpdater(
      */
     private fun executeBotIntent(bot: MutableBot) {
         botIntentsMap[bot.id]?.apply {
+            val oldSpeed = bot.speed
             bot.speed = calcNewBotSpeed(bot.speed, targetSpeed ?: 0.0)
-            bot.moveToNewPosition()
+            if (bot.speed != 0.0 || oldSpeed != 0.0){
+                bot.changeEnergy(MOVEMENT_PENALTY)
+            }
 
+            bot.moveToNewPosition()
+            val oldTurnRate = bot.turnRate
+            val oldRadarTurnRate = bot.radarTurnRate
             updateBotTurnRatesAndDirections(bot, this)
+            if (bot.turnRate != 0.0 || oldTurnRate != 0.0) {
+                bot.changeEnergy(TURN_AROUND_PENALTY)
+            }
+
+            if (bot.radarTurnRate != 0.0 || oldRadarTurnRate != 0.0) {
+                bot.changeEnergy(RADAR_PENALTY)
+            }
+
             updateBotColors(bot, this)
             updateDebugGraphics(bot, this)
             processStdErrAndStdOut(bot, this)
@@ -1089,11 +1103,6 @@ class ModelUpdater(
     }
 
     private fun createAndAddScannedWallEventToTurn(scanningBotId: BotId, scannedWall: Wall) {
-        // 检查 botId 是否存在于 participantIds 中
-        if (!participantIds.any { it.botId == scanningBotId }) {
-            println("ScannedWallEvent generated for non-existent botId: $scanningBotId")
-            return
-        }
         val scannedWallEvent = ScannedWallEvent(
             turnNumber = turn.turnNumber,
             scannedByBotId = scanningBotId,
