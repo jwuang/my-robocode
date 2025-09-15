@@ -48,7 +48,7 @@ object ArenaPanel : JPanel() {
 
     private var scale = 1.0
 
-    private var walls: List<WallState> = WallConfig.MAP2_WALLS
+    private var walls: List<WallState> = WallConfig.MAP5_WALLS
 
     init {
         addMouseWheelListener { e -> if (e != null) onMouseWheel(e) }
@@ -421,7 +421,7 @@ object ArenaPanel : JPanel() {
 
     private fun drawText(g: Graphics2D, text: String, x: Double, y: Double) {
         val width = g.fontMetrics.stringWidth(text)
-
+        g.font = Font("SansSerif", Font.BOLD, 20) // 设置字体、样式和大小
         g.drawString(text, x.toFloat() - width / 2, y.toFloat())
     }
 

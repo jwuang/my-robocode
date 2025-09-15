@@ -92,7 +92,7 @@ class ModelUpdater(
 
     internal fun isAlive(botId: BotId) = botsMap[botId]?.isAlive ?: false
 
-    private val walls: List<Wall> = WallConfig.MAP4_WALLS
+    private val walls: List<Wall> = WallConfig.MAP5_WALLS
     /**
      * Updates game state.
      * @param botIntents is the bot intents, which gives instructions to the game from the individual bots.
@@ -363,14 +363,31 @@ class ModelUpdater(
             walls === WallConfig.MAP4_WALLS -> {
                 // MAP4墙体配置的出生点
                 listOf(
-                    Point(600.0, 1140.0),
-                    Point(600.0, 60.0),
-                    Point(200.0, 1000.0),
-                    Point(1000.0, 1000.0),
-                    Point(60.0, 600.0),
-                    Point(1140.0, 600.0),
-                    Point(200.0, 200.0),
-                    Point(1000.0, 200.0)
+                    Point(380.0, 885.0),
+                    Point(645.0, 950.0),
+                    Point(885.0, 815.0),
+                    Point(955.0, 550.0),
+                    Point(805.0, 320.0),
+                    Point(550.0, 255.0),
+                    Point(315.0, 400.0),
+                    Point(245.0, 660.0)
+                )
+            }
+            walls === WallConfig.MAP5_WALLS -> {
+                // MAP5墙体配置的出生点
+                listOf(
+                    Point(320.0, 1140.0),
+                    Point(880.0, 1140.0),
+                    Point(50.0, 900.0),
+                    Point(1150.0, 900.0),
+                    Point(360.0, 360.0),
+                    Point(840.0, 360.0),
+                    Point(360.0, 840.0),
+                    Point(840.0, 840.0),
+                    Point(50.0, 300.0),
+                    Point(1150.0, 300.0),
+                    Point(320.0, 60.0),
+                    Point(880.0, 60.0)
                 )
             }
             else -> {

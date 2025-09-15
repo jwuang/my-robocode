@@ -68,7 +68,7 @@ const val ACCELERATION = 1.0
 const val DECELERATION = -2.0
 
 /** Ram damage */
-const val RAM_DAMAGE = 3.0  // 0.6
+const val RAM_DAMAGE = 4.0  // 0.6
 
 /** Energy gain factor, when bullet hits */
 const val BULLET_HIT_ENERGY_GAIN_FACTOR = 3
@@ -86,7 +86,7 @@ const val SCORE_PER_BULLET_DAMAGE = 2.0    // 1.0
 const val BONUS_PER_BULLET_KILL = 0.6
 
 /** Score per ram damage */
-const val SCORE_PER_RAM_DAMAGE = 4.0
+const val SCORE_PER_RAM_DAMAGE = 1.0
 
 /** Bonus per ram kill */
 const val BONUS_PER_RAM_KILL = 0.6

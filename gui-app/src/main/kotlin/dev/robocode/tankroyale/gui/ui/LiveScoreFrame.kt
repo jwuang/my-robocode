@@ -22,11 +22,11 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
     private val tableModel: DefaultTableModel
     private val table: JTable
     private val participants = mutableMapOf<Int, Participant>()
-    
+
     // 用于限制刷新频率
     private var lastUpdateTime: Long = 0
     private val minUpdateInterval: Long = 100 // 最小更新间隔为100毫秒
-    
+
     // 缓存最新的tickScores数据
     private var pendingTickScores: JsonArray? = null
     private val updateTimer = javax.swing.Timer(100) { // 每100ms检查一次是否需要更新
@@ -69,10 +69,10 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
         contentPane.add(scrollPane)
         pack()
         setLocationRelativeTo(null)
-        
+
         // 启动定时器
         updateTimer.start()
-        
+
         // 添加实时排行榜窗口关闭监听器
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent?) {
@@ -81,7 +81,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
             }
         })
         subscribeToEvents()
-        
+
         // 如果窗口在比赛已经开始后打开，则需要获取当前的参与者信息
         updateParticipantsFromCurrentGame()
     }
@@ -97,7 +97,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
             // 清除待处理的数据
             pendingTickScores = null
         }
-        
+
         // 监听比赛结束事件，确保最终得分被立即显示
         ClientEvents.onGameEnded.subscribe(this) { event ->
             // 立即处理任何待处理的tickScores数据
@@ -107,7 +107,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
             }
         }
     }
-    
+
     fun updateParticipants(participantsList: List<Participant>) {
         participants.clear()
         participantsList.forEach { participant ->
@@ -118,7 +118,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
             updateTableWithScoresImmediately(scores)
         }
     }
-    
+
     // 当窗口在比赛已经开始后打开时，需要获取当前比赛的参与者信息
     private fun updateParticipantsFromCurrentGame() {
         val currentParticipants = UIManager.getCurrentParticipants()
@@ -156,7 +156,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
 
         // 使用事务方式更新表格以减少闪烁
         tableModel.dataVector.removeAllElements()
-        
+
         // Add new data
         for (element in tickScores) {
             val score = element.jsonObject
@@ -186,10 +186,10 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
     private fun updateTableWithScoresImmediately(tickScores: JsonArray) {
         // 绕过频率限制，立即更新
         lastUpdateTime = 0 // 重置时间检查，确保更新会执行
-        
+
         // 使用事务方式更新表格以减少闪烁
         tableModel.dataVector.removeAllElements()
-        
+
         // Add new data
         for (element in tickScores) {
             val score = element.jsonObject
@@ -224,7 +224,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
         tableModel.rowCount = 0
         tableModel.fireTableDataChanged()
     }
-    
+
     // 添加dispose方法确保资源正确释放
     override fun dispose() {
         updateTimer.stop()

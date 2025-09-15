@@ -161,4 +161,22 @@ object WallConfig {
         Wall(id=59, x=316.0, y=871.5, width=117.0, height=2.0, rotation=270.0 ),
         Wall(id=60, x=366.5, y=982.5, width=146.0, height=2.0, rotation=46.0 ),
     )
+
+    val MAP5_WALLS = listOf(
+        Wall (id = 1, x = 600.0, y = 600.0, width = 132.0, height = 132.0, rotation = 0.0),
+        Wall (id = 2, x = 600.0, y = 937.0, width = 286.0, height = 2.0, rotation = 90.0),
+        Wall (id = 3, x = 937.0, y = 600.0, width = 286.0, height = 2.0, rotation = 0.0),
+        Wall (id = 4, x = 263.0, y = 600.0, width = 286.0, height = 2.0, rotation = 0.0),
+        Wall (id = 5, x = 600.0, y = 263.0, width = 286.0, height = 2.0, rotation = 90.0),
+
+        Wall (id = 6, x = 1040.0, y = 923.0, width = 331.0, height = 2.0, rotation = 15.0),
+        Wall (id = 7, x = 923.0, y = 1040.0, width = 331.0, height = 2.0, rotation = 75.0),
+        Wall (id = 8, x = 277.0, y = 1040.0, width = 331.0, height = 2.0, rotation = 105.0),
+        Wall (id = 9, x = 160.0, y = 923.0, width = 331.0, height = 2.0, rotation = 165.0),
+
+        Wall (id = 10, x = 923.0, y = 160.0, width = 331.0, height = 2.0, rotation = 105.0),
+        Wall (id = 11, x = 277.0, y = 160.0, width = 331.0, height = 2.0, rotation = 75.0),
+        Wall (id = 12, x = 160.0, y = 277.0, width = 331.0, height = 2.0, rotation = 15.0),
+        Wall (id = 13, x = 1040.0, y = 277.0, width = 331.0, height = 2.0, rotation = 165.0),
+        )
 }
