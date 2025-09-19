@@ -13,6 +13,7 @@ import kotlinx.serialization.PolymorphicSerializer
 import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.serialization.json.*
 
 
 /**
@@ -221,6 +222,19 @@ class LiveBattlePlayer : BattlePlayer {
     }
 
     private fun onMessage(msg: String) {
+        //        println("msg: $msg")
+        // Check if this is a TickEvent with tickScores
+        try {
+            val jsonObject = kotlinx.serialization.json.Json.parseToJsonElement(msg).jsonObject
+            if (jsonObject.containsKey("type") &&
+                "TickEventForObserver" == jsonObject["type"]?.jsonPrimitive?.content &&
+                jsonObject.containsKey("tickScores")) {
+                // Forward to UI manager
+                dev.robocode.tankroyale.gui.ui.UIManager.updateLiveScores(msg)
+            }
+        } catch (e: Exception) {
+            // Ignore parsing errors
+        }
         when (val type = json.decodeFromString(PolymorphicSerializer(Message::class), msg)) {
             is TickEvent -> handleTickEvent(type)
             is ServerHandshake -> handleServerHandshake(type)
