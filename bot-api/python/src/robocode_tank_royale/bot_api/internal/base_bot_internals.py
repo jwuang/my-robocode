@@ -5,7 +5,6 @@ import time
 import math
 import os
 from typing import Any, Optional, Set, Sequence
-import drawsvg  # type: ignore
 
 from ..base_bot_abc import BaseBotABC
 from ..bot_abc import BotABC
@@ -17,7 +16,7 @@ from ..events.condition import Condition
 from ..game_setup import GameSetup
 from ..initial_position import InitialPosition
 from ..util.math_util import MathUtil
-from ..color import Color
+from ..graphics import Color, GraphicsABC
 
 from .base_bot_internal_data import BaseBotInternalData
 from .bot_event_handlers import BotEventHandlers
@@ -105,13 +104,13 @@ class BaseBotInternals:
         self._init()
 
     def _get_server_url_from_setting(self) -> str:
-        url = os.getenv("ROBOCODE_SERVER_URL", os.getenv("SERVER_URL"))
+        url = os.getenv("SERVER_URL", os.getenv("SERVER_URL"))
         if url is None:
             url = DEFAULT_SERVER_URL
         return url
 
     def _get_server_secret_from_setting(self) -> Optional[str]:
-        return os.getenv("ROBOCODE_SERVER_SECRET", os.getenv("SERVER_SECRET"))
+        return os.getenv("SERVER_SECRET", os.getenv("SERVER_SECRET"))
 
     def _init(self) -> None:
         # Skipping redirectStdOutAndStdErr for now
@@ -317,7 +316,6 @@ class BaseBotInternals:
 
     async def _connect(self) -> None:
         self._sanitize_url(self.server_url)
-        assert self.server_secret is not None
         try:
             self.web_socket_handler = WebSocketHandler(  # Store the handler instance
                 self.data,  # Pass BaseBotInternalData instance
@@ -389,7 +387,7 @@ class BaseBotInternals:
             and hasattr(current_tick.bot_state, "is_debugging_enabled")
             and current_tick.bot_state.is_debugging_enabled
         ):
-            svg_output = self.data.graphics_state.as_svg()  # type: ignore
+            svg_output = self.data.graphics_state.to_svg()
             self.data.bot_intent.debug_graphics = svg_output
             self.data.graphics_state.clear()
         else:
@@ -407,7 +405,7 @@ class BaseBotInternals:
                     == asyncio.current_task()  # Ensure this is the bot's main task\
                     and not asyncio.current_task().cancelled()  # type: ignore
                 ):
-                        await self.next_turn_monitor.wait()
+                    await self.next_turn_monitor.wait()
         except asyncio.CancelledError:
             # We get a CancelledError if the server stops the game.
             return None
@@ -490,49 +488,48 @@ class BaseBotInternals:
             radar_turn_rate, -self.max_radar_turn_rate, self.max_radar_turn_rate
         )
 
-    def set_target_speed(self, target_speed: float) -> None:
+    @property
+    def target_speed(self) -> float | None:
+        return self.data.bot_intent.target_speed
+
+    @target_speed.setter
+    def target_speed(self, target_speed: float) -> None:
         if math.isnan(target_speed):
             raise ValueError("'target_speed' cannot be NaN")
         self.data.bot_intent.target_speed = MathUtil.clamp(
             target_speed, -self.max_speed, self.max_speed
         )
 
-    def get_max_speed(
-        self,
-    ) -> float:  # Max speed is part of bot's own limits, not server state
+    def get_max_speed(self) -> float:
+        # Max speed is part of bot's own limits, not server state
         return self.max_speed
 
-    def set_max_speed(
-        self, max_speed: float
-    ) -> None:  # Max speed is part of bot's own limits
+    def set_max_speed(self, max_speed: float) -> None:
+        # Max speed is part of bot's own limits
         self.max_speed = MathUtil.clamp(max_speed, 0, MAX_SPEED)
 
-    def get_max_turn_rate(self) -> float:  # Max turn rate is part of bot's own limits
+    def get_max_turn_rate(self) -> float:
+        # Max turn rate is part of bot's own limits
         return self.max_turn_rate
 
-    def set_max_turn_rate(
-        self, max_turn_rate: float
-    ) -> None:  # Max turn rate is part of bot's own limits
+    def set_max_turn_rate(self, max_turn_rate: float) -> None:
+        # Max turn rate is part of bot's own limits
         self.max_turn_rate = MathUtil.clamp(max_turn_rate, 0, MAX_TURN_RATE)
 
-    def get_max_gun_turn_rate(
-        self,
-    ) -> float:  # Max gun turn rate is part of bot's own limits
+    def get_max_gun_turn_rate(self) -> float:
+        # Max gun turn rate is part of bot's own limits
         return self.max_gun_turn_rate
 
-    def set_max_gun_turn_rate(
-        self, max_gun_turn_rate: float
-    ) -> None:  # Max gun turn rate is part of bot's own limits
+    def set_max_gun_turn_rate(self, max_gun_turn_rate: float) -> None:
+        # Max gun turn rate is part of bot's own limits
         self.max_gun_turn_rate = MathUtil.clamp(max_gun_turn_rate, 0, MAX_GUN_TURN_RATE)
 
-    def get_max_radar_turn_rate(
-        self,
-    ) -> float:  # Max radar turn rate is part of bot's own limits
+    def get_max_radar_turn_rate(self) -> float:
+        # Max radar turn rate is part of bot's own limits
         return self.max_radar_turn_rate
 
-    def set_max_radar_turn_rate(
-        self, max_radar_turn_rate: float
-    ) -> None:  # Max radar turn rate is part of bot's own limits
+    def set_max_radar_turn_rate(self, max_radar_turn_rate: float) -> None:
+        # Max radar turn rate is part of bot's own limits
         self.max_radar_turn_rate = MathUtil.clamp(
             max_radar_turn_rate, 0, MAX_RADAR_TURN_RATE
         )
@@ -620,13 +617,9 @@ class BaseBotInternals:
 
             self.data.saved_target_speed = self.data.bot_intent.target_speed
             self.data.saved_turn_rate = self.data.bot_intent.turn_rate
-            self.data.saved_gun_turn_rate = self.data.bot_intent.gun_turn_rate
-            self.data.saved_radar_turn_rate = self.data.bot_intent.radar_turn_rate
 
             self.data.bot_intent.target_speed = 0.0
             self.data.bot_intent.turn_rate = 0.0
-            self.data.bot_intent.gun_turn_rate = 0.0
-            self.data.bot_intent.radar_turn_rate = 0.0
 
             if self.stop_resume_listener is not None:
                 self.stop_resume_listener.on_stop()
@@ -635,8 +628,6 @@ class BaseBotInternals:
         if self.data.is_stopped:
             self.data.bot_intent.target_speed = self.data.saved_target_speed
             self.data.bot_intent.turn_rate = self.data.saved_turn_rate
-            self.data.bot_intent.gun_turn_rate = self.data.saved_gun_turn_rate
-            self.data.bot_intent.radar_turn_rate = self.data.saved_radar_turn_rate
 
             if self.stop_resume_listener is not None:
                 self.stop_resume_listener.on_resume()
@@ -748,7 +739,7 @@ class BaseBotInternals:
     def gun_color(self, color: Optional[Color]) -> None:
         self.data.bot_intent.gun_color = color.to_color_schema() if color else None
 
-    def get_graphics(self) -> drawsvg.Drawing:
+    def get_graphics(self) -> GraphicsABC:
         return self.data.graphics_state
 
     # Bullet States - Delegated

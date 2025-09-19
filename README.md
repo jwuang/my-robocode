@@ -44,7 +44,7 @@ Or continue to [My First Bot tutorial](https://robocode-dev.github.io/tank-royal
 how to set up your first bot for Robocode Tank Royale.
 
 An [Installation](https://robocode-dev.github.io/tank-royale/articles/installation.html) guide for installing the
-[GUI application](https://robocode-dev.github.io/tank-royale/articles/gui.html) is available, as well the
+[GUI](https://robocode-dev.github.io/tank-royale/articles/gui.html) is available, as well the
 [sample bots](https://robocode-dev.github.io/tank-royale/articles/installation.html#sample-bots) for demoing some
 battles in Robocode without any need to code anything yourself (yet).
 
@@ -75,7 +75,7 @@ only need to deal with the bot logic:
 Both implementations are first-class citizens within Tank Royale, and more might follow in the future for other popular
 platforms. Also, note that sample bots are provided for both APIs.
 
-## Supported programming languages
+## Supported platforms / programming languages
 
 Due to the current bot APIs for the JVM and .Net, Robocode (should be) able to support these programming languages with
 the current Bot APIs:
@@ -85,6 +85,21 @@ the current Bot APIs:
 
 - **.Net platform:** These programming languages (and more) are available:
     - [C#], [F#], [Visual Basic], and [IronPython]
+
+## Work in progress
+
+- **Bot API for**:
+    - Python
+    - WebAssembly (Wasm)
+      - JavaScript
+      - TypeScript
+- **Robocode API bridge for Tank Royale**
+    - Project can be found here: [robocode-api-bridge](https://github.com/robocode-dev/robocode-api-bridge) 
+
+## Thanks to the contributors
+
+Huge thanks to every [contributor](https://github.com/robocode-dev/tank-royale/graphs/contributors) — you make this
+project shine! 🙌
 
 ## Maintainer
 

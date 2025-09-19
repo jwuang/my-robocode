@@ -1,13 +1,11 @@
 import math
 from typing import Any, Optional, Sequence
 
-import drawsvg  # type: ignore
-
 from .base_bot_abc import BaseBotABC
 from .bot_info import BotInfo
 from .constants import *
 from .internal.base_bot_internals import BaseBotInternals
-from .color import Color
+from .graphics import Color, GraphicsABC
 from .events.condition import Condition
 from .util.math_util import MathUtil
 from .bullet_state import BulletState
@@ -29,6 +27,13 @@ class BaseBot(BaseBotABC):
         server_secret: Optional[str] = None,
     ):
         super().__init__()
+        # try to automatically read the bot config file
+        if bot_info is None:
+            bot_info_file = f"{self.__class__.__name__}.json"
+            try:
+                bot_info = BotInfo.from_file(bot_info_file)
+            except:
+                print('Failed to read bot info json file: {bot_info_file}.')
         self._internals = BaseBotInternals(self, bot_info, server_url, server_secret)
 
     async def start(self) -> None:
@@ -154,7 +159,7 @@ class BaseBot(BaseBotABC):
         return self._internals.get_bullet_states()
 
     def get_events(self) -> Sequence[BotEvent | None] | None:
-        self._internals.get_events()
+        return self._internals.get_events()
 
     def clear_events(self) -> None:
         self._internals.clear_events()
@@ -169,11 +174,11 @@ class BaseBot(BaseBotABC):
 
     @property
     def max_turn_rate(self) -> float:
-        return self._internals.max_turn_rate
+        return self._internals.get_max_turn_rate()
 
     @max_turn_rate.setter
     def max_turn_rate(self, max_turn_rate: float) -> None:
-        self._internals.max_turn_rate = max_turn_rate
+        self._internals.set_max_turn_rate(max_turn_rate)
 
     @property
     def gun_turn_rate(self) -> float:
@@ -185,11 +190,11 @@ class BaseBot(BaseBotABC):
 
     @property
     def max_gun_turn_rate(self) -> float:
-        return self._internals.max_gun_turn_rate
+        return self._internals.get_max_gun_turn_rate()
 
     @max_gun_turn_rate.setter
     def max_gun_turn_rate(self, max_gun_turn_rate: float) -> None:
-        self._internals.max_gun_turn_rate = max_gun_turn_rate
+        self._internals.set_max_gun_turn_rate(max_gun_turn_rate)
 
     @property
     def radar_turn_rate(self) -> float:
@@ -201,11 +206,11 @@ class BaseBot(BaseBotABC):
 
     @property
     def max_radar_turn_rate(self) -> float:
-        return self._internals.max_radar_turn_rate
+        return self._internals.get_max_radar_turn_rate()
 
     @max_radar_turn_rate.setter
     def max_radar_turn_rate(self, max_radar_turn_rate: float) -> None:
-        self._internals.max_radar_turn_rate = max_radar_turn_rate
+        self._internals.set_max_radar_turn_rate(max_radar_turn_rate)
 
     @property
     def target_speed(self) -> float:
@@ -220,11 +225,11 @@ class BaseBot(BaseBotABC):
 
     @property
     def max_speed(self) -> float:
-        return self._internals.max_speed
+        return self._internals.get_max_speed()
 
     @max_speed.setter
     def max_speed(self, max_speed: float) -> None:
-        self._internals.max_speed = max_speed
+        self._internals.set_max_speed(max_speed)
 
     def set_fire(self, firepower: float) -> bool:
         return self._internals.set_fire(firepower)
@@ -361,7 +366,7 @@ class BaseBot(BaseBotABC):
         # Debugging is always enabled for now in Python client
         return True
 
-    def get_graphics(self) -> drawsvg.Drawing:
+    def get_graphics(self) -> GraphicsABC:
         return self._internals.get_graphics()
 
     # Utility methods

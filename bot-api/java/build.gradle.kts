@@ -19,7 +19,6 @@ plugins {
     alias(libs.plugins.jsonschema2pojo)
     alias(libs.plugins.shadow)
     `maven-publish`
-    signing
 }
 
 dependencies {
@@ -31,15 +30,6 @@ dependencies {
     testImplementation(testLibs.assertj)
     testImplementation(testLibs.system.stubs)
     testImplementation(libs.java.websocket) // for mocked server
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-
-    withJavadocJar()
-    withSourcesJar()
 }
 
 jsonSchema2Pojo {
@@ -86,6 +76,8 @@ tasks {
             attributes["Package"] = project.group
         }
         minimize()
+        // Ensure artifact follows <base.archivesName>-<version>.jar
+        archiveBaseName.set(base.archivesName)
         archiveClassifier = ""
     }
 
@@ -122,15 +114,42 @@ tasks {
     register<Copy>("copyJavaApiDocs") {
         dependsOn(javadoc)
 
-        val javadocDir = layout.projectDirectory.dir("../../docs/api/java")
+        // Only copy docs when explicitly asked for via release/docs tasks or this task itself
+        onlyIf {
+            gradle.startParameter.taskNames.any {
+                it.contains("build-release") ||
+                it.contains("upload-docs") ||
+                it.contains("create-release") ||
+                it == "copyJavaApiDocs" ||
+                it.endsWith(":copyJavaApiDocs")
+            }
+        }
 
-        delete(javadocDir)
-        mkdir(javadocDir)
+        val javadocDir = layout.projectDirectory.dir("../../docs/api/java")
 
         duplicatesStrategy = DuplicatesStrategy.FAIL
 
         from(layout.buildDirectory.dir("docs/javadoc"))
         into(javadocDir)
+
+        doFirst {
+            // Clean target directory only when task actually runs
+            delete(javadocDir)
+            mkdir(javadocDir)
+        }
+    }
+
+    // Make sure javadoc is only generated when specifically requested
+    javadoc {
+        onlyIf {
+            gradle.startParameter.taskNames.any {
+                it.contains("build-release") ||
+                it.contains("upload-docs") ||
+                it.contains("create-release") ||
+                it == "javadoc" ||
+                it.endsWith(":javadoc")
+            }
+        }
     }
 
     // Make sure documentation tasks are not part of the build task
@@ -147,53 +166,22 @@ tasks {
         dependsOn(compileJava)
     }
 
+    // Configure the maven publication to use the shadow jar as the main artifact
     publishing {
         publications {
-            create<MavenPublication>("bot-api") {
+            named<MavenPublication>("maven") {
                 val outJars = shadowJar.get().outputs.files
                 if (outJars.isEmpty) {
-                    throw GradleException("Proguard did not produce output artifacts")
+                    throw GradleException("Shadow jar did not produce output artifacts")
                 }
 
                 artifact(shadowJar)
                 artifact(javadocJar)
                 artifact(sourcesJar)
 
-                groupId = group as String?
-                artifactId = base.archivesName.get()
-                version
-
-                pom {
-                    name = javadocTitle
-                    description = project.description
-                    url = "https://github.com/robocode-dev/tank-royale"
-
-                    licenses {
-                        license {
-                            name = "The Apache License, Version 2.0"
-                            url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = "fnl"
-                            name = "Flemming Nørnberg Larsen"
-                            url = "https://github.com/flemming-n-larsen"
-                            organization = "robocode.dev"
-                            organizationUrl = "https://robocode-dev.github.io/tank-royale/"
-                        }
-                    }
-                    scm {
-                        connection = "scm:git:git://github.com/robocode-dev/tank-royale.git"
-                        developerConnection = "scm:git:ssh://github.com:robocode-dev/tank-royale.git"
-                        url = "https://github.com/robocode-dev/tank-royale/tree/master"
-                    }
-                }
+                // Override the name in the POM with the javadocTitle variable
+                pom.name.set(javadocTitle)
             }
         }
     }
-}
-
-signing {
-    sign(publishing.publications["bot-api"])
 }

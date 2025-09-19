@@ -28,7 +28,6 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     `maven-publish`
-    signing
 }
 
 dependencies {
@@ -36,18 +35,8 @@ dependencies {
     implementation(project(":lib:client"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.picocli)
-    implementation(libs.jansi)
     implementation(libs.slf4j.api)
     implementation(libs.java.websocket)
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-
-    withJavadocJar() // required for uploading to Sonatype
-    withSourcesJar()
 }
 
 tasks {
@@ -110,9 +99,10 @@ tasks {
     val javadocJar = named("javadocJar")
     val sourcesJar = named("sourcesJar")
 
+    // Configure the maven publication to use the ProGuard jar as the main artifact
     publishing {
         publications {
-            create<MavenPublication>("recorder") {
+            named<MavenPublication>("maven") {
                 val outJars = proguard.get().outJarFiles
                 if (outJars.isEmpty()) {
                     throw GradleException("Proguard did not produce output artifacts")
@@ -124,46 +114,18 @@ tasks {
                 artifact(javadocJar)
                 artifact(sourcesJar)
 
-                groupId = group as String?
-                artifactId = base.archivesName.get()
-                version
+                // Override the name in the POM with the title variable
+                pom.name.set(title)
 
-                pom {
-                    name.set(title)
-                    description.set(project.description)
-                    url.set("https://github.com/robocode-dev/tank-royale")
-
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = "jandurovec"
-                            name = "Jan Durovec"
-                            url = "https://github.com/jandurovec"
-                        }
-                        developer {
-                            id = "fnl"
-                            name = "Flemming Nørnberg Larsen"
-                            url = "https://github.com/flemming-n-larsen"
-                            organization = "robocode.dev"
-                            organizationUrl = "https://robocode-dev.github.io/tank-royale/"
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:git://github.com/robocode-dev/tank-royale.git")
-                        developerConnection.set("scm:git:ssh://github.com:robocode-dev/tank-royale.git")
-                        url.set("https://github.com/robocode-dev/tank-royale/tree/master")
+                // Add additional developer
+                pom.developers {
+                    developer {
+                        id.set("jandurovec")
+                        name.set("Jan Durovec")
+                        url.set("https://github.com/jandurovec")
                     }
                 }
             }
         }
     }
-}
-
-signing {
-    sign(publishing.publications["recorder"])
 }

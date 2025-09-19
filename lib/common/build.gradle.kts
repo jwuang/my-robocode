@@ -17,18 +17,8 @@ plugins {
 
 dependencies {
     implementation(libs.slf4j.api)
-    implementation(libs.jansi)
 
     testImplementation(testLibs.kotest.junit5)
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-
-    withJavadocJar()
-    withSourcesJar()
 }
 
 tasks {

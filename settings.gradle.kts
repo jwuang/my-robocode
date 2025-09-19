@@ -1,4 +1,4 @@
-rootProject.name = "robocode-tank-royale"
+rootProject.name = "dev.robocode.tankroyale"
 
 val version: String = providers.gradleProperty("version").get()
 
@@ -15,18 +15,18 @@ include("server")
 // Recorder
 include("recorder")
 
-// GUI app
-include("gui-app")
+// GUI
+include("gui")
 
 // Bot API
 include("bot-api:java")
-//  include("bot-api:dotnet")
-//  include("bot-api:dotnet:schema")
-//  include("bot-api:python")
+include("bot-api:dotnet")
+include("bot-api:dotnet:schema")
+include("bot-api:python")
 
 // Sample Bots archives
 include("sample-bots:java")
-//  include("sample-bots:csharp")
+include("sample-bots:csharp")
 
 // Docs
 include("buildDocs")

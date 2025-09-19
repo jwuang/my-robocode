@@ -8,12 +8,13 @@ description = "Robocode Tank Royale sample bots for Java"
 group = "dev.robocode.tankroyale"
 version = libs.versions.tankroyale.get()
 
-val archiveFilename = "sample-bots-java-${version}.zip"
+base {
+    archivesName = "sample-bots-java"
+}
 
 plugins {
     base // for the clean and build task
     `maven-publish`
-    signing
 }
 
 tasks {
@@ -80,95 +81,28 @@ tasks {
         }
     }
 
-    fun copyReadMeFile(projectDir: File, archivePath: Path) {
-        val filename = "ReadMe.md"
-        copy(File(projectDir, "assets/$filename").toPath(), archivePath.resolve(filename), REPLACE_EXISTING)
-    }
-
-    val build = named("build") {
-        dependsOn(copyBotApiJar)
-
+    named("build") {
         doLast {
             prepareBotFiles()
-            copyReadMeFile(projectDir, archiveDirPath)
         }
     }
 
-    val zip by registering(Zip::class) {
-        dependsOn(build)
-
-        archiveFileName.set(archiveFilename)
-        destinationDirectory.set(layout.buildDirectory)
-        filePermissions {
-            user {
-                read = true
-                execute = true
-            }
-            other {
-                execute = true
-            }
-        }
-
-        from(archiveDir)
-    }
-
+    // Configure the maven publication to use the zip artifact
     publishing {
         publications {
-            create<MavenPublication>("sample-bots") {
+            named<MavenPublication>("maven") {
                 // Define the artifact
                 artifact(zip) {
-                    classifier = "" // No classifier for main artifact
+                    classifier = "" // No classifier for the main artifact
                     extension = "zip"
                 }
 
-                // Set publication coordinates
-                groupId = group.toString()
-                artifactId = "sample-bots-java"
-                version = project.version.toString()
+                // Ensure artifactId follows base.archivesName
+                artifactId = base.archivesName.get()
 
-                pom {
-                    name.set("Robocode Tank Royale Sample Bots for Java")
-                    description.set(project.description)
-                    url.set("https://github.com/robocode-dev/tank-royale")
-
-                    licenses {
-                        license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = "fnl"
-                            name = "Flemming Nørnberg Larsen"
-                            url = "https://github.com/flemming-n-larsen"
-                            organization = "robocode.dev"
-                            organizationUrl = "https://robocode-dev.github.io/tank-royale/"
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:git://github.com/robocode-dev/tank-royale.git")
-                        developerConnection.set("scm:git:ssh://github.com:robocode-dev/tank-royale.git")
-                        url.set("https://github.com/robocode-dev/tank-royale/tree/master")
-                    }
-                }
-            }
-        }
-
-        repositories {
-            maven {
-                name = "MavenCentral"
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-
-                credentials {
-                    username = project.findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME")
-                    password = project.findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD")
-                }
+                // Override the POM name
+                pom.name.set("Robocode Tank Royale Sample Bots for Java")
             }
         }
     }
-}
-
-signing {
-    sign(publishing.publications["sample-bots"])
 }

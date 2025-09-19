@@ -24,11 +24,15 @@ generated/
 /bot-api/dotnet/docs/Release-notes.txt
 
 *.iml
+*.lock
+*.sln.DotSettings.user
 
-/games.properties
+/game-setups.properties
 /server.properties
-/config.properties
+/gui.properties
+
 /*.battle.gz
 
 /.codiumai/
 /.kotlin
+/recordings/

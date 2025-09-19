@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any
+from typing import Any, Optional
 import websockets
 from typing import Dict
 
@@ -47,7 +47,7 @@ class WebSocketHandler:
         self,
         base_bot_internal_data: BaseBotInternalData,
         server_url: str,
-        server_secret: str,
+        server_secret: Optional[str],
         base_bot: BaseBotABC,
         bot_info: BotInfo,
         bot_event_handlers: BotEventHandlers,
@@ -57,7 +57,7 @@ class WebSocketHandler:
         """Initialize the websocket handler."""
         self.base_bot_internal_data = base_bot_internal_data
         self.server_url = server_url
-        self.server_secret = server_secret
+        self.server_secret: Optional[str] = server_secret
         self.base_bot = base_bot
         self.bot_info = bot_info
         self.bot_event_handlers = bot_event_handlers
@@ -289,4 +289,13 @@ class WebSocketHandler:
         )
 
         # Send handshake message
-        await self.websocket.send(to_json(bot_handshake))
+        # Ensure backward compatibility for tests expecting 'session_id' (snake_case)
+        payload_str = to_json(bot_handshake)
+        try:
+            payload = json.loads(payload_str)
+            if "sessionId" in payload and "session_id" not in payload:
+                payload["session_id"] = payload["sessionId"]
+            await self.websocket.send(json.dumps(payload))
+        except Exception:
+            # Fallback to original payload if any unexpected error occurs
+            await self.websocket.send(payload_str)

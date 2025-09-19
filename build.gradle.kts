@@ -1,6 +1,7 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import build.release.createRelease
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 description = "Robocode: Build the best - destroy the rest!"
 
@@ -15,7 +16,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.nexus.publish)
 
-    alias(libs.plugins.benmanes.versions) // dependency management only
+    // Publishing with signing
+    `maven-publish`
+    signing
+
+    // Dependency management providing task: dependencyUpdates
+    alias(libs.plugins.benmanes.versions)
 }
 
 repositories {
@@ -28,6 +34,107 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+    }
+
+    // Apply common Java configuration to all subprojects with a Java plugin
+    plugins.withId("java") {
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(11))
+            }
+
+            // required for publishing:
+            withJavadocJar()
+            withSourcesJar()
+        }
+    }
+
+    // Common publishing configuration for all subprojects with maven-publish plugin
+    plugins.withId("maven-publish") {
+        apply(plugin = "signing")
+        publishing {
+            publications {
+                create<MavenPublication>("maven") {
+                    // Set coordinates, resolve lazily to avoid order issues
+                    groupId = "dev.robocode.tankroyale"
+                    // Initial artifactId; we will re-apply after project is evaluated, see afterEvaluate below
+                    artifactId = if (project.extensions.findByType<BasePluginExtension>() != null) {
+                        project.extensions.getByType<BasePluginExtension>().archivesName.get()
+                    } else {
+                        project.name
+                    }
+                    version = project.version.toString()
+
+                    pom {
+                        name.set(project.name)
+                        description.set(providers.provider {
+                            val d = project.description?.trim()
+                            if (!d.isNullOrEmpty()) d else "Robocode Tank Royale - ${project.name}"
+                        })
+                        url.set("https://github.com/robocode-dev/tank-royale")
+
+                        licenses {
+                            license {
+                                name.set("The Apache License, Version 2.0")
+                                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id.set("fnl")
+                                name.set("Flemming Nørnberg Larsen")
+                                url.set("https://github.com/flemming-n-larsen")
+                                organization.set("robocode.dev")
+                                organizationUrl.set("https://robocode-dev.github.io/tank-royale/")
+                            }
+                        }
+
+                        scm {
+                            connection.set("scm:git:git://github.com/robocode-dev/tank-royale.git")
+                            developerConnection.set("scm:git:ssh://github.com:robocode-dev/tank-royale.git")
+                            url.set("https://github.com/robocode-dev/tank-royale/tree/master")
+                        }
+                    }
+                }
+            }
+        }
+        // Ensure coordinates are correct after all project configuration has been evaluated
+        afterEvaluate {
+            extensions.configure<PublishingExtension> {
+                publications.withType<MavenPublication> {
+                    groupId = "dev.robocode.tankroyale"
+                    val baseExt = project.extensions.findByType<BasePluginExtension>()
+                    artifactId = baseExt?.archivesName?.get() ?: project.name
+                }
+            }
+        }
+    }
+
+    // Configure signing for all subprojects with signing plugin
+    plugins.withId("signing") {
+        signing {
+            val signingKey: String? by project
+            val signingPassword: String? by project
+
+            // Add debug info to check if key exists
+            if (signingKey.isNullOrBlank()) {
+                logger.warn("Signing key is null or blank. Signing will not work.")
+            } else {
+                logger.info("Signing key found with length: ${signingKey?.length}")
+            }
+
+            if (!signingPassword.isNullOrBlank()) {
+                logger.info("Signing password is present")
+            }
+
+            useInMemoryPgpKeys(signingKey, signingPassword)
+
+            // Make signing required for artifacts
+            isRequired = true
+
+            sign(publishing.publications)
+        }
     }
 
     tasks {
@@ -54,9 +161,12 @@ tasks {
             //  "bot-api:dotnet:assemble",   // Bot API for .Net
             "booter:assemble",           // Booter (for booting up bots locally)
             "server:assemble",           // Server
-            "gui-app:assemble",          // GUI
-            "sample-bots:java:zip",      // Sample bots for Java
-            //  "sample-bots:csharp:zip",    // Sample bots for C#
+            "gui:assemble",              // GUI
+            "sample-bots:zip",           // Sample bots
+        )
+        finalizedBy(
+            "bot-api:dotnet:copyDotnetApiDocs", // Docfx documentation for .NET Bot API
+            "bot-api:java:copyJavaApiDocs"      // Javadocs for Java Bot API
         )
     }
 
@@ -104,18 +214,23 @@ subprojects {
         shouldRunAfter(tasks.withType<Sign>())
     }
 
-    // Apply common signing configuration to all subprojects
-    plugins.withId("signing") {
-        configure<SigningExtension> {
-            useGpgCmd() // Use GPG agent instead of key file
-        }
-    }
-
-    // Include Tank.ico in the published artifacts
+    // Include Tank.ico in the published artifacts without cross-project output conflicts
+    // We copy the icon into a subproject-local build directory, so each module signs its own copy.
     plugins.withId("maven-publish") {
+        // Create a task per subproject that copies the shared icon into the module's buildDir
+        val preparePublicationIcon = tasks.register<Copy>("preparePublicationIcon") {
+            val srcIcon = file("${rootProject.projectDir}/gfx/Tank/Tank.ico")
+            val destDir = layout.buildDirectory.dir("publication-resources/icon").get().asFile
+            from(srcIcon)
+            into(destDir)
+            outputs.file(file("${destDir}/Tank.ico"))
+        }
+
         configure<PublishingExtension> {
             publications.withType<MavenPublication> {
-                artifact(file("${rootProject.projectDir}/gfx/Tank/Tank.ico")) {
+                val copiedIcon = layout.buildDirectory.file("publication-resources/icon/Tank.ico").get().asFile
+                artifact(copiedIcon) {
+                    builtBy(preparePublicationIcon)
                     classifier = "icon"
                     extension = "ico"
                 }
