@@ -11,20 +11,25 @@ object UIManager {
     init {
         initialize()
     }
-    
+    // In UIManager.kt
     fun initialize() {
-        // Subscribe to events to manage the live score frame
         ClientEvents.onGameStarted.subscribe(this) { event ->
-            // 保存当前参与者信息
+            // Save the current participants
             currentParticipants = event.participants
-            // 新比赛开始时清空实时排行榜数据
-            liveScoreFrame?.clearScores()
-            // 更新实时排行榜中的参与者信息
-            liveScoreFrame?.updateParticipants(event.participants)
+
+            // --- FIX ---
+            // Instead of disposing the frame, clear it and update it.
+            // This keeps the window alive if it was already open.
+            liveScoreFrame?.apply {
+                clearPanels()
+                updateParticipants(event.participants)
+            }
         }
 
         ClientEvents.onGameEnded.subscribe(this) {
-
+            // You might want to clear participants when the game ends
+            // currentParticipants = emptyList()
+            // liveScoreFrame?.clearPanels()
         }
     }
 
