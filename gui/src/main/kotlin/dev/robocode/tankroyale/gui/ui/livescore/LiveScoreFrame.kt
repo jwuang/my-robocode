@@ -1,24 +1,22 @@
-package dev.robocode.tankroyale.gui.ui
+package dev.robocode.tankroyale.gui.ui.livescore
 
 import dev.robocode.tankroyale.client.model.Participant
 import dev.robocode.tankroyale.gui.client.ClientEvents
+import dev.robocode.tankroyale.gui.ui.livescore.UIManager
 import dev.robocode.tankroyale.gui.ui.components.RcFrame
-import dev.robocode.tankroyale.gui.ui.livescore.BackgroundPanel
-import dev.robocode.tankroyale.gui.ui.livescore.RobotScorePanel
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.awt.Point
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.Timer
 import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.double
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.doubleOrNull
 
 class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) {
 
@@ -36,14 +34,14 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
     private val animationTimer: Timer  // Drives smooth animation
 
     companion object {
-        private const val PANEL_HEIGHT = 110
-        private const val PANEL_WIDTH = 960
+        private const val PANEL_HEIGHT = 80
+        private const val PANEL_WIDTH = 840
         private const val ANIMATION_SPEED = 0.15 // Higher is faster
     }
 
     init {
         contentPane = backgroundPanel
-        setSize(1000, 800)
+        setSize(2730, 1535)
         setLocationRelativeTo(null)
 
         // This timer throttles how often we process new score data
@@ -92,7 +90,7 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
 
     fun updateWithTickScores(tickScoresJson: String) {
         try {
-            val jsonObject = Json.parseToJsonElement(tickScoresJson).jsonObject
+            val jsonObject = Json.Default.parseToJsonElement(tickScoresJson).jsonObject
             pendingTickScores = jsonObject["tickScores"]?.jsonArray
         } catch (e: Exception) {
             e.printStackTrace()
@@ -108,12 +106,18 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
         tickScores.forEach { element ->
             val score = element.jsonObject
             maxScores["total"] = max(maxScores["total"]!!, score["totalScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
-            maxScores["survival"] = max(maxScores["survival"]!!, score["survivalScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
-            maxScores["lastSurvivor"] = max(maxScores["lastSurvivor"]!!, score["lastSurvivorBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
-            maxScores["bulletDmg"] = max(maxScores["bulletDmg"]!!, score["bulletDamageScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
-            maxScores["bulletKill"] = max(maxScores["bulletKill"]!!, score["bulletKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
-            maxScores["ramDmg"] = max(maxScores["ramDmg"]!!, score["ramDamageScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
-            maxScores["ramKill"] = max(maxScores["ramKill"]!!, score["ramKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
+            maxScores["survival"] =
+                max(maxScores["survival"]!!, score["survivalScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
+            maxScores["lastSurvivor"] =
+                max(maxScores["lastSurvivor"]!!, score["lastSurvivorBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
+            maxScores["bulletDmg"] =
+                max(maxScores["bulletDmg"]!!, score["bulletDamageScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
+            maxScores["bulletKill"] =
+                max(maxScores["bulletKill"]!!, score["bulletKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
+            maxScores["ramDmg"] =
+                max(maxScores["ramDmg"]!!, score["ramDamageScore"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
+            maxScores["ramKill"] =
+                max(maxScores["ramKill"]!!, score["ramKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
         }
 
         // 2. Update panels and calculate target positions

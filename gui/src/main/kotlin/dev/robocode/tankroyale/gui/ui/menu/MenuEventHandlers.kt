@@ -8,6 +8,7 @@ import dev.robocode.tankroyale.gui.ui.config.DebugConfigDialog
 import dev.robocode.tankroyale.gui.ui.config.ServerConfigDialog
 import dev.robocode.tankroyale.gui.ui.config.SetupRulesDialog
 import dev.robocode.tankroyale.gui.ui.config.SoundConfigDialog
+import dev.robocode.tankroyale.gui.ui.livescore.UIManager
 import dev.robocode.tankroyale.gui.ui.newbattle.NewBattleDialog
 import dev.robocode.tankroyale.gui.ui.replay.ReplayFileChooser
 import dev.robocode.tankroyale.gui.ui.server.RemoteServer
@@ -66,7 +67,7 @@ object MenuEventHandlers {
                 AboutBox.isVisible = true
             }
             onLiveScoreBoard.subscribe(this) {
-                dev.robocode.tankroyale.gui.ui.UIManager.showLiveScoreFrame()
+                UIManager.showLiveScoreFrame()
             }
         }
     }

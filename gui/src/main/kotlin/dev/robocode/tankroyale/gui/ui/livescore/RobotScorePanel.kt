@@ -37,10 +37,10 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
     private var maxRamKillBonus = 1.0
 
     init {
-        isOpaque = false // Crucial for background image
+        isOpaque = true // Crucial for background image
         layout = BorderLayout(10, 0)
         border = BorderFactory.createEmptyBorder(5, 10, 5, 10)
-
+        background = Color(20, 20, 20, 100)
         // Rank
         rankLabel.font = Font("Consolas", Font.ITALIC, 24)
         rankLabel.foreground = Color(255, 200, 0)
@@ -49,7 +49,8 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
 
         // Center panel for name and bars
         val centerPanel = JPanel()
-        centerPanel.isOpaque = false
+        centerPanel.isOpaque = true
+        centerPanel.background = Color.PINK
         centerPanel.layout = BoxLayout(centerPanel, BoxLayout.Y_AXIS)
         add(centerPanel, BorderLayout.CENTER)
 
@@ -60,12 +61,13 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         centerPanel.add(nameLabel)
 
         // Bars panel
-        val barsPanel = JPanel(FlowLayout(FlowLayout.LEFT))
-        barsPanel.isOpaque = false
+        val barsPanel = JPanel(FlowLayout(FlowLayout.CENTER))
+        barsPanel.isOpaque = true
+        barsPanel.background = Color.YELLOW
         barsPanel.alignmentX = Component.CENTER_ALIGNMENT
         centerPanel.add(barsPanel)
 
-        // Configure and add bars
+        // Configure and add bars 兰亭黑/Yu gothic
         totalScoreBar.barColor = Color(51, 153, 255, 200) // Light blue for total
         survivalBar.barColor = Color(40, 180, 99, 200)      // Green for survival
         lastSurvivorBonusBar.barColor = Color(241, 196, 15, 200) // Yellow for bonus
@@ -87,9 +89,14 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
 
     private fun createLabeledBar(labelText: String, bar: ScoreBar): JPanel {
         val panel = JPanel(BorderLayout())
-        panel.isOpaque = false
+        panel.isOpaque = true
+        panel.background = Color.orange
+
         val label = JLabel(labelText)
-        label.foreground = Color.LIGHT_GRAY
+        label.foreground = Color.WHITE
+        // 设置标签文本水平居中对齐
+        label.horizontalAlignment = 0
+        label.verticalAlignment = 0
         panel.add(label, BorderLayout.NORTH)
         panel.add(bar, BorderLayout.CENTER)
         return panel

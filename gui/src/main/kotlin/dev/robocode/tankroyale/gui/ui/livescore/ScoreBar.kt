@@ -25,7 +25,9 @@ class ScoreBar : JComponent() {
     }
 
     init {
-        font = Font("Tahoma", Font.BOLD, 12)
+        font = Font("Tahoma", Font.PLAIN, 12)
+        isOpaque = true
+        background = Color.GREEN
     }
 
     fun update(value: Double, maximumValue: Double, text: String) {

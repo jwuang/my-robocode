@@ -8,6 +8,7 @@ import dev.robocode.tankroyale.common.util.Version
 import dev.robocode.tankroyale.gui.settings.ConfigSettings
 import dev.robocode.tankroyale.gui.settings.GamesSettings
 import dev.robocode.tankroyale.gui.settings.ServerSettings
+import dev.robocode.tankroyale.gui.ui.livescore.UIManager
 import dev.robocode.tankroyale.gui.ui.server.ServerEvents
 import kotlinx.serialization.PolymorphicSerializer
 import java.net.URI
@@ -230,7 +231,7 @@ class LiveBattlePlayer : BattlePlayer {
                 "TickEventForObserver" == jsonObject["type"]?.jsonPrimitive?.content &&
                 jsonObject.containsKey("tickScores")) {
                 // Forward to UI manager
-                dev.robocode.tankroyale.gui.ui.UIManager.updateLiveScores(msg)
+                UIManager.updateLiveScores(msg)
             }
         } catch (e: Exception) {
             // Ignore parsing errors

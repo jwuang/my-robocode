@@ -1,8 +1,7 @@
-package dev.robocode.tankroyale.gui.ui
+package dev.robocode.tankroyale.gui.ui.livescore
 
-import dev.robocode.tankroyale.gui.client.ClientEvents
-import dev.robocode.tankroyale.client.model.GameStartedEvent
 import dev.robocode.tankroyale.client.model.Participant
+import dev.robocode.tankroyale.gui.client.ClientEvents
 
 object UIManager {
     private var liveScoreFrame: LiveScoreFrame? = null
@@ -52,7 +51,7 @@ object UIManager {
     fun updateLiveScores(tickScoresJson: String) {
         liveScoreFrame?.updateWithTickScores(tickScoresJson)
     }
-    
+
     fun getCurrentParticipants(): List<Participant> {
         return currentParticipants
     }

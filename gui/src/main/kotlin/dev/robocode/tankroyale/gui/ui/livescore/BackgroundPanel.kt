@@ -13,7 +13,7 @@ class BackgroundPanel : JPanel() {
     private var backgroundImage: Image? = null
 
     // 1. Add an alpha property (0.0f = transparent, 1.0f = opaque)
-    var alpha: Float = 0.0f
+    var alpha: Float = 0.7f
         set(value) {
             field = value.coerceIn(0f, 1f) // Ensure value is between 0 and 1
             repaint() // Repaint when alpha changes

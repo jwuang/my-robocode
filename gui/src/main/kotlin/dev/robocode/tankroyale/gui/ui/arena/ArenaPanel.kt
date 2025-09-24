@@ -261,7 +261,7 @@ object ArenaPanel : JPanel() {
         g.translate(0, -arenaHeight) // y-axis on screen is translated into y-axis of cartesian coordinate system
 
         drawGround(g)
-        drawWalls(g)
+        // drawWalls(g)
         drawBots(g)
         drawExplosions(g)
         drawBullets(g)
