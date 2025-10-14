@@ -1,9 +1,5 @@
 package dev.robocode.tankroyale.server.rules
 
-/**
- * 子弹/碰撞/移动/扫描/生存消耗得分设定，进攻得分目前相对较高，生存得分较低
- */
-
 /** Arena minimum size (width / height) */
 const val ARENA_MIN_SIZE = 400
 

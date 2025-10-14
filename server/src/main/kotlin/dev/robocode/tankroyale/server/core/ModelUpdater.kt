@@ -92,7 +92,7 @@ class ModelUpdater(
 
     internal fun isAlive(botId: BotId) = botsMap[botId]?.isAlive ?: false
 
-    private val walls: List<Wall> = WallConfig.MAP5_WALLS
+    private val walls: List<Wall> = WallConfig.MAP4_WALLS
     /**
      * Updates game state.
      * @param botIntents is the bot intents, which gives instructions to the game from the individual bots.
@@ -991,10 +991,20 @@ class ModelUpdater(
 
             val (startAngle, endAngle) = getScanAngles(scanningBot)
 
-            // 收集所有可扫描到的物体
+            // 1. 统一收集扫描范围内的所有物体（机器人和墙体）
             val scannedObjects = mutableListOf<ScannedObject>()
 
-            // 扫描其他机器人
+            // 收集墙体
+            for (wall in walls) {
+                if (isWallScanned(scanningBot, wall, startAngle, endAngle)) {
+                    val distanceToCenter = scanningBot.position.toPoint().distanceTo(wall.position())
+                    // 使用到墙体边缘的最近距离进行排序，确保墙体边缘先于中心被判断
+                    val distance = (distanceToCenter - wall.boundsRadius).coerceAtLeast(0.0)
+                    scannedObjects.add(ScannedWall(wall, distance))
+                }
+            }
+
+            // 收集机器人
             for (otherBot in bots) {
                 if (otherBot.id == scanningBot.id) continue
 
@@ -1004,23 +1014,31 @@ class ModelUpdater(
                 }
             }
 
-            // 扫描墙体
-            for (wall in walls) {
-                if (isWallScanned(scanningBot, wall, startAngle, endAngle)) {
-                    val distanceToCenter = scanningBot.position.toPoint().distanceTo(wall.position())
-                    val distance = (distanceToCenter - wall.boundsRadius).coerceAtLeast(0.0)
-                    scannedObjects.add(ScannedWall(wall, distance))
-                }
-            }
+            // 2. 按距离从近到远排序
+            scannedObjects.sortBy { it.distance }
 
-            // 只处理最近的物体（实现遮挡效果）
-            scannedObjects.minByOrNull { it.distance }?.let { closest ->
-                when (closest) {
-                    is ScannedBot -> {
-                        createAndAddScannedBotEventToTurn(scanningBot.id, closest.bot)
-                    }
-                    is ScannedWall -> {
-                        createAndAddScannedWallEventToTurn(scanningBot.id, closest.wall)
+            // 3. 迭代处理，实现统一的遮挡逻辑
+            val visibleOccluders = mutableListOf<Wall>() // 只存储可见的墙体作为遮挡物
+
+            scannedObjects.forEach { scannedObject ->
+                val objectCenter = when (scannedObject) {
+                    is ScannedBot -> Point(scannedObject.bot.position.x,scannedObject.bot.position.y)
+                    is ScannedWall -> scannedObject.wall.position()
+                }
+                val lineOfSight = Line(scanningBot.position.toPoint(), objectCenter)
+
+                // 检查视线是否被任何已知的、更近的可见墙体遮挡
+                val isOccluded = visibleOccluders.any { occluder -> occluder.intersects(lineOfSight) }
+
+                if (!isOccluded) {
+                    // 如果未被遮挡，则生成事件
+                    when (scannedObject) {
+                        is ScannedBot -> createAndAddScannedBotEventToTurn(scanningBot.id, scannedObject.bot)
+                        is ScannedWall -> {
+                            createAndAddScannedWallEventToTurn(scanningBot.id, scannedObject.wall)
+                            // 并将这个可见的墙体加入遮挡物列表，用于后续判断
+                            visibleOccluders.add(scannedObject.wall)
+                        }
                     }
                 }
             }

@@ -10,9 +10,9 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
         get() = mapOf(
             GameType.CUSTOM.displayName to GameSetup(
                 gameType = GameType.CUSTOM.displayName,
-                arenaWidth = 800,
+                arenaWidth = 1200,
                 isArenaWidthLocked = false,
-                arenaHeight = 600,
+                arenaHeight = 1200,
                 isArenaHeightLocked = false,
                 minNumberOfParticipants = 2,
                 isMinNumberOfParticipantsLocked = false,
@@ -32,9 +32,9 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
             ),
             GameType.CLASSIC.displayName to GameSetup(
                 gameType = GameType.CLASSIC.displayName,
-                arenaWidth = 800,
+                arenaWidth = 1200,
                 isArenaWidthLocked = true,
-                arenaHeight = 600,
+                arenaHeight = 1200,
                 isArenaHeightLocked = true,
                 minNumberOfParticipants = 2,
                 isMinNumberOfParticipantsLocked = true,
@@ -54,9 +54,9 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
             ),
             GameType.MELEE.displayName to GameSetup(
                 gameType = GameType.MELEE.displayName,
-                arenaWidth = 1000,
+                arenaWidth = 1200,
                 isArenaWidthLocked = true,
-                arenaHeight = 1000,
+                arenaHeight = 1200,
                 isArenaHeightLocked = true,
                 minNumberOfParticipants = 10,
                 isMinNumberOfParticipantsLocked = true,
@@ -76,9 +76,9 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
             ),
             GameType.ONE_VS_ONE.displayName to GameSetup(
                 gameType = GameType.ONE_VS_ONE.displayName,
-                arenaWidth = 800,
+                arenaWidth = 1200,
                 isArenaWidthLocked = true,
-                arenaHeight = 600,
+                arenaHeight = 1200,
                 isArenaHeightLocked = true,
                 minNumberOfParticipants = 2,
                 isMinNumberOfParticipantsLocked = true,

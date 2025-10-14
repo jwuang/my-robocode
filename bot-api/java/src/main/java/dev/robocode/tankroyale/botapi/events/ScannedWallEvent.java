@@ -71,7 +71,7 @@ public final class ScannedWallEvent extends BotEvent{
      *
      * @return The id of the wall that was scanned.
      */
-    public int getScannedBotId() {
+    public int getScannedWallId() {
         return scannedWallId;
     }
 

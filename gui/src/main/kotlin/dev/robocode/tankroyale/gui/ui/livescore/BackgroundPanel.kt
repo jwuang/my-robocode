@@ -5,7 +5,6 @@ import java.awt.AlphaComposite
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Image
-import javax.imageio.ImageIO
 import javax.swing.JPanel
 
 class BackgroundPanel : JPanel() {

@@ -24,10 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
 import kotlin.math.sin
-import kotlin.div
 import kotlin.math.sqrt
-import kotlin.text.toInt
-import kotlin.unaryMinus
+
 
 
 object ArenaPanel : JPanel() {
@@ -56,8 +54,8 @@ object ArenaPanel : JPanel() {
 
     private val explosions = CopyOnWriteArrayList<Animation>()
 
-    private var arenaWidth: Int = Client.currentGameSetup?.arenaWidth ?: 800
-    private var arenaHeight: Int = Client.currentGameSetup?.arenaHeight ?: 600
+    private var arenaWidth: Int = Client.currentGameSetup?.arenaWidth ?: 1200
+    private var arenaHeight: Int = Client.currentGameSetup?.arenaHeight ?: 1200
 
     private var round: Int = 0
     private var time: Int = 0
@@ -71,7 +69,7 @@ object ArenaPanel : JPanel() {
 
     private var scale = 1.0
 
-    private var walls: List<WallState> = WallConfig.MAP5_WALLS
+    private var walls: List<WallState> = WallConfig.MAP1_WALLS
 
     init {
         addMouseWheelListener { e -> if (e != null) onMouseWheel(e) }

@@ -2,7 +2,6 @@ package dev.robocode.tankroyale.gui.ui.livescore
 
 import dev.robocode.tankroyale.client.model.Participant
 import dev.robocode.tankroyale.gui.client.ClientEvents
-import dev.robocode.tankroyale.gui.ui.livescore.UIManager
 import dev.robocode.tankroyale.gui.ui.components.RcFrame
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -12,16 +11,19 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.awt.Point
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.Timer
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) {
+class LiveScoreFrame : RcFrame("实时积分排行榜", isTitlePropertyName = false) {
 
     private val participants = mutableMapOf<Int, Participant>()
     private var pendingTickScores: JsonArray? = null
+    private var rankedParticipantIds: List<Int> = emptyList()
 
     // New components for graphical layout
     private val backgroundPanel = BackgroundPanel()
@@ -35,8 +37,9 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
 
     companion object {
         private const val PANEL_HEIGHT = 80
-        private const val PANEL_WIDTH = 840
+        private const val PANEL_WIDTH = 820
         private const val ANIMATION_SPEED = 0.15 // Higher is faster
+        private const val INTERVAL = 10
     }
 
     init {
@@ -61,6 +64,12 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
                 dataUpdateTimer.stop()
                 animationTimer.stop()
                 UIManager.hideLiveScoreFrame()
+            }
+        })
+
+        addComponentListener(object : ComponentAdapter() {
+            override fun componentResized(e: ComponentEvent?) {
+                recalculateTargetPositions()
             }
         })
 
@@ -98,6 +107,9 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
     }
 
     private fun processScores(tickScores: JsonArray) {
+        // Store the ranked list of participant IDs
+        rankedParticipantIds = tickScores.map { it.jsonObject["participantId"]?.jsonPrimitive?.int ?: 0 }
+
         // 1. Calculate max scores for consistent bar scaling
         val maxScores = mutableMapOf(
             "total" to 1.0, "survival" to 1.0, "lastSurvivor" to 1.0,
@@ -120,10 +132,15 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
                 max(maxScores["ramKill"]!!, score["ramKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0)
         }
 
+        // Create a map for quick lookup of scores by participant ID
+        val scoresByParticipantId = tickScores.associateBy {
+            it.jsonObject["participantId"]?.jsonPrimitive?.int ?: 0
+        }
+
         // 2. Update panels and calculate target positions
-        tickScores.forEachIndexed { index, element ->
-            val score = element.jsonObject
-            val participantId = score["participantId"]?.jsonPrimitive?.int ?: 0
+        rankedParticipantIds.forEach { participantId ->
+            val scoreObject = scoresByParticipantId[participantId] ?: return@forEach // Skip if score not found
+            val score = scoreObject.jsonObject
             val participant = participants[participantId]
             val name = participant?.name ?: "Bot $participantId"
 
@@ -140,16 +157,33 @@ class LiveScoreFrame : RcFrame("Live Score Board", isTitlePropertyName = false) 
 
             // Update its data
             panel.updateScores(score, name, maxScores)
-
-            // Calculate its new target position
-            val targetY = 10 + (index * (PANEL_HEIGHT + 5))
-            panelTargetPositions[participantId] = Point(10, targetY)
         }
 
-        // 3. Start animation if not already running
+        // 3. Recalculate all positions based on new data and current window size
+        recalculateTargetPositions()
+    }
+
+    private fun recalculateTargetPositions() {
+        if (rankedParticipantIds.isEmpty()) return
+
+        val panelCount = rankedParticipantIds.size
+        val totalPanelsHeight = panelCount * PANEL_HEIGHT + max(0, panelCount - 1) * INTERVAL
+
+        // Calculate centered starting position
+        val startX = (contentPane.width - PANEL_WIDTH) / 2
+        val startY = (contentPane.height - totalPanelsHeight) / 2
+
+        // Update target position for each panel based on its rank
+        rankedParticipantIds.forEachIndexed { index, participantId ->
+            val targetY = startY + (index * (PANEL_HEIGHT + INTERVAL))
+            panelTargetPositions[participantId] = Point(startX, targetY)
+        }
+
+        // Start animation if not already running to move panels to their new target positions
         if (!animationTimer.isRunning) {
             animationTimer.start()
         }
+        // If animation is already running, it will just pick up the new target positions on its next tick.
     }
 
     private fun animatePanels() {

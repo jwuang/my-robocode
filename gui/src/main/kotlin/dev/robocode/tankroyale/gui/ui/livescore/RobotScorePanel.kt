@@ -40,7 +40,7 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         isOpaque = true // Crucial for background image
         layout = BorderLayout(10, 0)
         border = BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        background = Color(20, 20, 20, 100)
+        background = Color(0, 0, 0, 60)
         // Rank
         rankLabel.font = Font("Consolas", Font.ITALIC, 24)
         rankLabel.foreground = Color(255, 200, 0)
@@ -49,21 +49,21 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
 
         // Center panel for name and bars
         val centerPanel = JPanel()
-        centerPanel.isOpaque = true
-        centerPanel.background = Color.PINK
+        centerPanel.isOpaque = false
+        // centerPanel.background = Color.WHITE
         centerPanel.layout = BoxLayout(centerPanel, BoxLayout.Y_AXIS)
         add(centerPanel, BorderLayout.CENTER)
 
         // Name
-        nameLabel.font = Font(Font.DIALOG, Font.PLAIN, 16)
+        nameLabel.font = Font(Font.DIALOG, Font.PLAIN, 20)
         nameLabel.foreground = Color.WHITE
         nameLabel.alignmentX = Component.CENTER_ALIGNMENT
         centerPanel.add(nameLabel)
 
         // Bars panel
         val barsPanel = JPanel(FlowLayout(FlowLayout.CENTER))
-        barsPanel.isOpaque = true
-        barsPanel.background = Color.YELLOW
+        barsPanel.isOpaque = false
+        barsPanel.background = Color(0, 0, 0, 60)
         barsPanel.alignmentX = Component.CENTER_ALIGNMENT
         centerPanel.add(barsPanel)
 
@@ -89,8 +89,8 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
 
     private fun createLabeledBar(labelText: String, bar: ScoreBar): JPanel {
         val panel = JPanel(BorderLayout())
-        panel.isOpaque = true
-        panel.background = Color.orange
+        panel.isOpaque = false
+        // panel.background = Color.darkGray
 
         val label = JLabel(labelText)
         label.foreground = Color.WHITE
@@ -123,7 +123,7 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         val ramKillBonus = scoreData["ramKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0
 
         // Update UI components
-        rankLabel.text = "#$rank"
+        rankLabel.text = "No.$rank"
         nameLabel.text = name
 
         totalScoreBar.update(totalScore, maxTotalScore, String.format("%.0f", totalScore))
@@ -133,5 +133,8 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         bulletKillBonusBar.update(bulletKillBonus, maxBulletKillBonus, String.format("%.0f", bulletKillBonus))
         ramDamageBar.update(ramDamage, maxRamScore, String.format("%.0f", ramDamage))
         ramKillBonusBar.update(ramKillBonus, maxRamKillBonus, String.format("%.0f", ramKillBonus))
+
+        // Repaint the entire panel at once after all child components have been updated.
+        repaint()
     }
 }
