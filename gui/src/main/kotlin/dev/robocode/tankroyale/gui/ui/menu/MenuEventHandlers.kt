@@ -66,9 +66,6 @@ object MenuEventHandlers {
             onAbout.subscribe(this) {
                 AboutBox.isVisible = true
             }
-            onLiveScoreBoard.subscribe(this) {
-                UIManager.showLiveScoreFrame()
-            }
         }
     }
 

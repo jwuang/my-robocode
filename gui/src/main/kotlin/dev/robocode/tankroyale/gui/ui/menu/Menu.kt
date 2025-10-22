@@ -35,7 +35,6 @@ object Menu : JMenuBar() {
         MenuEventHandlers
 
         setupBattleMenu()
-        setupViewMenu()
         setupServerMenu()
         setupConfigMenu()
         setupHelpMenu()
@@ -62,17 +61,6 @@ object Menu : JMenuBar() {
             addNewMenuItem("item.setup_rules", onSetupRules).apply {
                 mnemonic = KeyEvent.VK_R
                 accelerator = ctrlDown(mnemonic)
-            }
-        })
-    }
-
-    private fun setupViewMenu() {
-        add(JMenu(MenuTitles.get("menu.view")).apply {
-            mnemonic = KeyEvent.VK_V
-
-            addNewMenuItem("item.live_score_board", onLiveScoreBoard).apply {
-                mnemonic = KeyEvent.VK_L
-                accelerator = ctrlDown(KeyEvent.VK_L)
             }
         })
     }

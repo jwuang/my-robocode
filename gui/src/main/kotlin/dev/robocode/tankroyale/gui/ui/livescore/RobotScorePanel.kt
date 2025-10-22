@@ -40,22 +40,22 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         isOpaque = true // Crucial for background image
         layout = BorderLayout(10, 0)
         border = BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        background = Color(0, 0, 0, 60)
+        background = Color.gray // 或 Color.DARK_GRAY.darker()
         // Rank
-        rankLabel.font = Font("Consolas", Font.ITALIC, 24)
+        rankLabel.font = Font("Consolas", Font.ITALIC, 12)
         rankLabel.foreground = Color(255, 200, 0)
-        rankLabel.preferredSize = Dimension(60, 0)
+        rankLabel.preferredSize = Dimension(30, 0)
         add(rankLabel, BorderLayout.WEST)
 
         // Center panel for name and bars
         val centerPanel = JPanel()
-        centerPanel.isOpaque = false
+        centerPanel.isOpaque = true
         // centerPanel.background = Color.WHITE
         centerPanel.layout = BoxLayout(centerPanel, BoxLayout.Y_AXIS)
         add(centerPanel, BorderLayout.CENTER)
 
         // Name
-        nameLabel.font = Font(Font.DIALOG, Font.PLAIN, 20)
+        nameLabel.font = Font(Font.DIALOG, Font.PLAIN, 10)
         nameLabel.foreground = Color.WHITE
         nameLabel.alignmentX = Component.CENTER_ALIGNMENT
         centerPanel.add(nameLabel)
@@ -123,7 +123,7 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         val ramKillBonus = scoreData["ramKillBonus"]?.jsonPrimitive?.doubleOrNull ?: 0.0
 
         // Update UI components
-        rankLabel.text = "No.$rank"
+        rankLabel.text = "#$rank"
         nameLabel.text = name
 
         totalScoreBar.update(totalScore, maxTotalScore, String.format("%.0f", totalScore))
@@ -133,8 +133,5 @@ class RobotScorePanel(val participantId: Int) : JPanel() {
         bulletKillBonusBar.update(bulletKillBonus, maxBulletKillBonus, String.format("%.0f", bulletKillBonus))
         ramDamageBar.update(ramDamage, maxRamScore, String.format("%.0f", ramDamage))
         ramKillBonusBar.update(ramKillBonus, maxRamKillBonus, String.format("%.0f", ramKillBonus))
-
-        // Repaint the entire panel at once after all child components have been updated.
-        repaint()
     }
 }

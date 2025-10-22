@@ -47,6 +47,13 @@ object MainFrame : RcFrame("main_frame") {
     }
 
     private fun close() {
+        // Stop live score panel timers to prevent background activity after exit
+        try {
+            BattlePanel.liveScorePanel.stop()
+        } catch (e: Exception) {
+            // ignore if panel not initialized or already stopped
+        }
+
         Client.close()
         BootProcess.stop()
         RecorderProcess.stop()

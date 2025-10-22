@@ -15,7 +15,7 @@ class ScoreBar : JComponent() {
     var text: String = ""
 
     var barColor: Color = Color(0x33, 0x99, 0xFF, 200) // A nice semi-transparent blue
-    var trackColor: Color = Color(0, 0, 0, 60) // Background of the bar
+    var trackColor: Color = Color(40, 40, 45) // Background of the bar
     var textColor: Color = Color.WHITE
     var textAlignment: Int = CENTER
 
@@ -26,7 +26,7 @@ class ScoreBar : JComponent() {
     }
 
     init {
-        font = Font("Tahoma", Font.PLAIN, 12)
+        font = Font("Tahoma", Font.PLAIN, 8)
         isOpaque = false // Make component transparent
     }
 
@@ -34,6 +34,7 @@ class ScoreBar : JComponent() {
         this.value = value
         this.maximumValue = if (maximumValue > 0) maximumValue else 1.0 // Avoid division by zero
         this.text = text
+        repaint()
     }
 
     override fun paintComponent(g: Graphics) {
@@ -66,6 +67,6 @@ class ScoreBar : JComponent() {
     }
 
     override fun getPreferredSize(): Dimension {
-        return Dimension(95, 20) // Default size
+        return Dimension(30, 15) // Default size
     }
 }

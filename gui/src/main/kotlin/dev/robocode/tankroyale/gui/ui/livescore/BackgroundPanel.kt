@@ -1,45 +1,67 @@
 package dev.robocode.tankroyale.gui.ui.livescore
 
 import dev.robocode.tankroyale.gui.ui.components.RcImages
-import java.awt.AlphaComposite
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Image
+import java.awt.MediaTracker
+import java.awt.RenderingHints
 import javax.swing.JPanel
 
 class BackgroundPanel : JPanel() {
 
     private var backgroundImage: Image? = null
-
-    // 1. Add an alpha property (0.0f = transparent, 1.0f = opaque)
-    var alpha: Float = 0.7f
-        set(value) {
-            field = value.coerceIn(0f, 1f) // Ensure value is between 0 and 1
-            repaint() // Repaint when alpha changes
-        }
+    private var imgWidth = -1
+    private var imgHeight = -1
 
     init {
-        layout = null // Use null layout for absolute positioning
+        isOpaque = true
+        layout = null
+
         try {
-            backgroundImage = RcImages.scoreBackgroundImage
+            val img = RcImages.scoreBackgroundImage// Wait for image to load (simple approach)
+            val tracker = MediaTracker(this)
+            tracker.addImage(img, 0)
+            tracker.waitForID(0, 5000) // timeout 5s
+
+            if (tracker.statusID(0, true) == MediaTracker.COMPLETE) {
+                backgroundImage = img
+                imgWidth = img.getWidth(this)
+                imgHeight = img.getHeight(this)
+            } else {
+                System.err.println("Background image failed to load in time.")
+            }
         } catch (e: Exception) {
-            println("Could not load background image: ${e.message}")
+            e.printStackTrace()
         }
     }
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
-        backgroundImage?.let {
-            val g2d = g as Graphics2D
 
-            // 2. Set the composite with the desired alpha before drawing
-            val originalComposite = g2d.composite
-            g2d.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
+        val g2d = g as Graphics2D
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
 
-            g2d.drawImage(it, 0, 0, width, height, this)
+        backgroundImage?.let { img ->
+            val imgW = img.getWidth(this)
+            val imgH = img.getHeight(this)
+            if (imgW <= 0 || imgH <= 0 || width <= 0 || height <= 0) return
 
-            // 3. Restore the original composite to not affect other components
-            g2d.composite = originalComposite
+            // 计算缩放比例：确保图像覆盖整个面板
+            val scaleX = width.toDouble() / imgW
+            val scaleY = height.toDouble() / imgH
+            val scale = maxOf(scaleX, scaleY) // 取较大者，确保覆盖
+
+            // 计算绘制尺寸
+            val drawW = (imgW * scale).toInt()
+            val drawH = (imgH * scale).toInt()
+
+            // 居中裁剪：计算偏移，使图像中心对齐面板中心
+            val drawX = (width - drawW) / 2
+            val drawY = (height - drawH) / 2
+
+            g2d.drawImage(img, drawX, drawY, drawW, drawH, this)
         }
     }
 }

@@ -2,9 +2,11 @@ package dev.robocode.tankroyale.gui.ui.livescore
 
 import dev.robocode.tankroyale.client.model.Participant
 import dev.robocode.tankroyale.gui.client.ClientEvents
+import dev.robocode.tankroyale.gui.ui.arena.BattlePanel
 
 object UIManager {
-    private var liveScoreFrame: LiveScoreFrame? = null
+    // The live score panel is now part of the BattlePanel
+    private val liveScorePanel: LiveScorePanel by lazy { BattlePanel.liveScorePanel }
     private var currentParticipants: List<Participant> = emptyList()
 
     init {
@@ -16,40 +18,34 @@ object UIManager {
             // Save the current participants
             currentParticipants = event.participants
 
-            // --- FIX ---
-            // Instead of disposing the frame, clear it and update it.
-            // This keeps the window alive if it was already open.
-            liveScoreFrame?.apply {
-                clearPanels()
-                updateParticipants(event.participants)
-            }
+            // Update the embedded live score panel
+            liveScorePanel.clearPanels()
+            liveScorePanel.updateParticipants(event.participants)
+            
+            // Automatically show the live score panel when game starts
+            showLiveScoreFrame()
         }
 
         ClientEvents.onGameEnded.subscribe(this) {
             // You might want to clear participants when the game ends
             // currentParticipants = emptyList()
-            // liveScoreFrame?.clearPanels()
+            // liveScorePanel.clearPanels()
         }
     }
 
     fun showLiveScoreFrame() {
-        if (liveScoreFrame == null) {
-            liveScoreFrame = LiveScoreFrame()
-            // 如果已经有当前比赛的参与者信息，则更新到新创建的LiveScoreFrame中
-            if (currentParticipants.isNotEmpty()) {
-                liveScoreFrame?.updateParticipants(currentParticipants)
-            }
-        }
-        liveScoreFrame?.isVisible = true
-        liveScoreFrame?.toFront()
+        // Make the embedded panel visible
+        liveScorePanel.isVisible = true
+        liveScorePanel.revalidate()
+        liveScorePanel.repaint()
     }
 
     fun hideLiveScoreFrame() {
-        liveScoreFrame?.isVisible = false
+        liveScorePanel.isVisible = false
     }
 
     fun updateLiveScores(tickScoresJson: String) {
-        liveScoreFrame?.updateWithTickScores(tickScoresJson)
+        liveScorePanel.updateWithTickScores(tickScoresJson)
     }
 
     fun getCurrentParticipants(): List<Participant> {
