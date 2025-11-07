@@ -212,7 +212,7 @@ class ProcessManager {
             }
 
             // Find the boot script
-            val scriptPath = findBootScriptOrNull(botDir) ?: return null
+            val scriptPath = findOsScript(botDir) ?: return null
 
             return createAndStartBotProcess(scriptPath, botDir, botEntry, team)
         } catch (ex: Exception) {
@@ -316,6 +316,13 @@ class ProcessManager {
 
     // SCRIPT FINDING
 
+    private fun getBotBaseName(botDir: Path): String? {
+        // 找唯一的 .json 文件，返回去除后缀的文件名
+        return botDir.toFile().listFiles()
+            ?.firstOrNull { it.isFile && it.extension == "json" }
+            ?.nameWithoutExtension
+    }
+
     /**
      * Find the boot script for a bot based on the operating system.
      * Logs an error if no script is found using a simple line format.
@@ -335,55 +342,49 @@ class ProcessManager {
     /**
      * Find the appropriate boot script based on the current operating system.
      */
-    private fun findOsScript(botDir: Path): Path? = when (OperatingSystemCheck.getOperatingSystemType()) {
-        Windows -> findWindowsScript(botDir)
-        Mac -> findMacOsScript(botDir)
-        else -> findFirstUnixScript(botDir)
+    private fun findOsScript(botDir: Path): Path? {
+        val baseName = getBotBaseName(botDir) ?: return null
+        return when (OperatingSystemCheck.getOperatingSystemType()) {
+            Windows -> findWindowsScript(botDir, baseName)
+            Mac -> findMacOsScript(botDir, baseName)
+            else -> findFirstUnixScript(botDir, baseName)
+        }
     }
 
     /**
      * Find a Windows-specific script (.bat or .cmd) for the bot.
      * Falls back to a Unix script if not found.
      */
-    private fun findWindowsScript(botDir: Path): Path? {
-        val botName = botDir.fileName.toString()
+    private fun findWindowsScript(botDir: Path, baseName: String): Path? {
         val extensions = listOf("bat", "cmd")
-
         for (extension in extensions) {
-            val path = botDir.resolve("$botName.$extension")
+            val path = botDir.resolve("$baseName.$extension")
             if (path.exists()) return path
         }
-
-        return findFirstUnixScript(botDir)
+        // fallback
+        return findFirstUnixScript(botDir, baseName)
     }
 
     /**
      * Find a macOS-specific script (.command) for the bot.
      * Falls back to a Unix script if not found.
      */
-    private fun findMacOsScript(botDir: Path): Path? {
-        val botName = botDir.fileName.toString()
-        val path = botDir.resolve("$botName.command")
-
-        return if (path.exists()) path else findFirstUnixScript(botDir)
+    private fun findMacOsScript(botDir: Path, baseName: String): Path? {
+        val path = botDir.resolve("$baseName.command")
+        return if (path.exists()) path else findFirstUnixScript(botDir, baseName)
     }
 
     /**
      * Find a Unix-compatible script (.sh or script with shebang) for the bot.
      */
-    private fun findFirstUnixScript(botDir: Path): Path? {
-        val botName = botDir.fileName.toString()
 
-        // First check for the.sh file as it is the most common
-        val shScript = botDir.resolve("$botName.sh")
+    private fun findFirstUnixScript(botDir: Path, baseName: String): Path? {
+        val shScript = botDir.resolve("$baseName.sh")
         if (shScript.exists()) return shScript
-
-        // Then check for the.py file since python is also supported
-        val pyScript = botDir.resolve("$botName.py")
+        val pyScript = botDir.resolve("$baseName.py")
         if (pyScript.exists()) return pyScript
-
-        // Look for any file with no file extension or containing the '#!' (shebang) characters
-        return findScriptWithShebangOrMatchingName(botDir, botName)
+        // 可以再拓展更多脚本类型
+        return null
     }
 
     /**

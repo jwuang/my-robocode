@@ -8,8 +8,8 @@ object RcImages {
 
     val tankImage: Image = readImage("/gfx/Tank.png")
     val logoImage: Image = readImage("/gfx/Robocode-logo.png")
-    val arenaBackgroundImage: Image = readImage("/gfx/Map4.png")
-    val scoreBackgroundImage: Image = readImage("/gfx/bg_blured_dark.png")
+    val arenaBackgroundImage: Image = readImage("/gfx/Map2.png")
+    val scoreBackgroundImage: Image = readImage("/gfx/bg.png")
     private fun readImage(filePath: String): Image {
         val inputStream = javaClass.getResourceAsStream(filePath)
         return ImageIcon(ImageIO.read(inputStream)).image

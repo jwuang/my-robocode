@@ -126,13 +126,12 @@ class DirCommand(private val botRootPaths: List<Path>) : Command() {
      */
     private fun listBotDirectories(): Set<Path> {
         val dirs = HashSet<Path>()
-
         botRootPaths.forEach { rootPath ->
             list(rootPath).forEach { dirPath ->
                 if (dirPath.isDirectory()) {
-                    val botName = dirPath.fileName.toString()
-                    val jsonPath = dirPath.resolve("$botName.json")
-                    if (exists(jsonPath)) {
+                    val jsonFile = dirPath.toFile().listFiles()
+                        ?.firstOrNull { it.isFile && it.extension == "json" }
+                    if (jsonFile != null) {
                         dirs.add(dirPath)
                     }
                 }

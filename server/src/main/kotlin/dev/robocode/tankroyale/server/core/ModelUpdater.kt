@@ -92,7 +92,7 @@ class ModelUpdater(
 
     internal fun isAlive(botId: BotId) = botsMap[botId]?.isAlive ?: false
 
-    private val walls: List<Wall> = WallConfig.MAP4_WALLS
+    private val walls: List<Wall> = WallConfig.MAP2_WALLS
     /**
      * Updates game state.
      * @param botIntents is the bot intents, which gives instructions to the game from the individual bots.

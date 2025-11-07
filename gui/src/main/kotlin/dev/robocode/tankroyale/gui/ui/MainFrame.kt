@@ -9,7 +9,7 @@ import dev.robocode.tankroyale.gui.ui.menu.Menu
 import dev.robocode.tankroyale.gui.server.ServerProcess
 import dev.robocode.tankroyale.gui.recorder.RecorderProcess
 import dev.robocode.tankroyale.gui.ui.arena.BattlePanel
-import dev.robocode.tankroyale.gui.ui.arena.LogoPanel
+// import dev.robocode.tankroyale.gui.ui.arena.LogoPanel
 import dev.robocode.tankroyale.gui.ui.components.RcFrame
 import dev.robocode.tankroyale.gui.ui.control.ControlEventHandlers
 import dev.robocode.tankroyale.gui.ui.control.ControlPanel
@@ -25,7 +25,7 @@ object MainFrame : RcFrame("main_frame") {
         UIManager.initialize()
         defaultCloseOperation = EXIT_ON_CLOSE
 
-        setSize(1050, 800)
+        setSize(1920, 1080)
 
         contentPane.add(MainPanel)
 
@@ -36,11 +36,11 @@ object MainFrame : RcFrame("main_frame") {
 
         ClientEvents.apply {
             onGameStarted.subscribe(MainFrame) { MainPanel.showArena() }
-            onGameEnded.subscribe(MainFrame) { MainPanel.showLogo() }
-            onGameAborted.subscribe(MainFrame) { MainPanel.showLogo() }
+            // onGameEnded.subscribe(MainFrame) { MainPanel.showLogo() }
+            // onGameAborted.subscribe(MainFrame) { MainPanel.showLogo() }
             onPlayerChanged.subscribe(MainFrame) { MainPanel.showArena() }
         }
-        ServerEvents.onStopped.subscribe(MainFrame) { MainPanel.showLogo() }
+        // ServerEvents.onStopped.subscribe(MainFrame) { MainPanel.showLogo() }
 
         onClosing { close() }
         Runtime.getRuntime().addShutdownHook(Thread { close() })
@@ -70,21 +70,22 @@ object MainFrame : RcFrame("main_frame") {
             AutoRecorder
 
             layout = BorderLayout()
-            add(LogoPanel, BorderLayout.CENTER)
+            // add(LogoPanel, BorderLayout.CENTER)
             add(ControlPanel, BorderLayout.SOUTH)
 
             ControlPanel.isVisible = false
+            showArena()
         }
 
         fun showLogo() {
             remove(BattlePanel)
-            add(LogoPanel, BorderLayout.CENTER)
+            // add(LogoPanel, BorderLayout.CENTER)
 
             refresh()
         }
 
         fun showArena() {
-            remove(LogoPanel)
+            // remove(LogoPanel)
             add(BattlePanel, BorderLayout.CENTER)
 
             ControlPanel.isVisible = true

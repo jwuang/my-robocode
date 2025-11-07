@@ -4,6 +4,9 @@ import dev.robocode.tankroyale.booter.model.BootEntry
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 abstract class Command {
 
@@ -14,10 +17,12 @@ abstract class Command {
     }
 
     protected fun getBootEntry(botDirPath: Path): BootEntry? {
-        val bootEntryJsonPath = botDirPath.resolve("${botDirPath.fileName}.json")
-        if (!bootEntryJsonPath.exists()) return null
+        // 寻找目录下唯一的 json 文件（按你约定就是 bot 的配置文件）
+        val jsonFile = botDirPath.toFile().listFiles()
+            ?.firstOrNull { it.isFile && it.extension == "json" }
+            ?: return null
 
-        val bootEntryJsonContent = bootEntryJsonPath.toFile().readText(Charsets.UTF_8)
+        val bootEntryJsonContent = jsonFile.readText(Charsets.UTF_8)
         return json.decodeFromString(bootEntryJsonContent)
     }
 }
