@@ -27,7 +27,6 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 
-
 object ArenaPanel : JPanel() {
 
     private val circleShape = Area(Ellipse2D.Double(-0.5, -0.5, 1.0, 1.0))
@@ -69,7 +68,7 @@ object ArenaPanel : JPanel() {
 
     private var scale = 1.0
 
-    private var walls: List<WallState> = WallConfig.MAP1_WALLS
+    private var walls: List<WallState> = WallConfig.MAP2_WALLS
 
     init {
         addMouseWheelListener { e -> if (e != null) onMouseWheel(e) }
@@ -102,7 +101,7 @@ object ArenaPanel : JPanel() {
     }
 
     private fun onGameEnded(gameEndedEvent: GameEndedEvent) {
-        ResultsFrame(gameEndedEvent.results).isVisible = true
+        // ResultsFrame(gameEndedEvent.results).isVisible = true
     }
 
     private fun onPlayerChanged(player: dev.robocode.tankroyale.gui.player.BattlePlayer) {
@@ -224,9 +223,9 @@ object ArenaPanel : JPanel() {
     private fun onMouseWheel(e: MouseWheelEvent) {
         var newScale = scale
         if (e.unitsToScroll > 0) {
-            newScale *= 1.2
+            newScale *= 1.1
         } else if (e.unitsToScroll < 0) {
-            newScale /= 1.2
+            newScale /= 1.1
         }
         if (newScale != scale && newScale >= 0.10 && newScale <= 10) {
             scale = newScale
@@ -333,8 +332,8 @@ object ArenaPanel : JPanel() {
     }
 
     private fun clearCanvas(g: Graphics) {
-        g.color = Color.DARK_GRAY
-        g.fillRect(0, 0, size.width, size.height)
+        val backgroundImage = RcImages.backgroundImage
+        g.drawImage(backgroundImage, 0, 0, size.width, size.height, null)
     }
 
     private fun drawGround(g: Graphics) {
@@ -631,4 +630,9 @@ object ArenaPanel : JPanel() {
         return area
     }
 
+    override fun getPreferredSize(): Dimension {
+        val mapSize = maxOf(arenaWidth, arenaHeight)
+        val totalSize = mapSize + 60 // 30px on each side
+        return Dimension(totalSize, totalSize)
+    }
 }

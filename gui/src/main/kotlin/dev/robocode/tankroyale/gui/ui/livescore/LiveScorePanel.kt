@@ -25,7 +25,7 @@ class LiveScorePanel : JPanel() {
     private var rankedParticipantIds: List<Int> = emptyList()
 
     private val backgroundPanel = BackgroundPanel().apply {
-        layout = null // absolute positioning
+        layout = null // absolute positioning used for animation
     }
 
     private val robotPanels = mutableMapOf<Int, RobotScorePanel>()
@@ -43,17 +43,18 @@ class LiveScorePanel : JPanel() {
     }
 
     companion object {
-        const val MIN_PANEL_WIDTH = 200
-        const val MAX_PANEL_WIDTH = 400
-        const val PANEL_HEIGHT = 50
-        const val INTERVAL = 10
-        const val ANIMATION_SPEED = 0.2f
-        const val SLIDE_IN_OFFSET = 50 // pixels off-screen for entrance
+        const val MIN_PANEL_WIDTH = 450
+        const val MAX_PANEL_WIDTH = 500
+        // PANEL_HEIGHT removed as fixed; use each panel's preferredSize.height
+        const val INTERVAL = 8
+        const val ANIMATION_SPEED = 0.22f
+        const val SLIDE_IN_OFFSET = 60 // pixels off-screen for entrance
     }
 
     init {
         layout = BorderLayout()
         minimumSize = Dimension(MIN_PANEL_WIDTH, 0)
+        maximumSize = Dimension(MAX_PANEL_WIDTH, 1080)
 
         val scrollPane = JScrollPane(backgroundPanel).apply {
             horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -62,11 +63,6 @@ class LiveScorePanel : JPanel() {
         }
         add(scrollPane, BorderLayout.CENTER)
 
-        addComponentListener(object : ComponentAdapter() {
-            override fun componentResized(e: ComponentEvent?) {
-                recalculateTargetPositions()
-            }
-        })
 
         subscribeToEvents()
         updateParticipantsFromCurrentGame()
@@ -74,16 +70,9 @@ class LiveScorePanel : JPanel() {
         dataUpdateTimer.start()
     }
 
-    // ✅ Dynamic preferred width based on parent
+    // Dynamic preferred width based on parent
     override fun getPreferredSize(): Dimension {
-        val parentWidth = parent?.width ?: MAX_PANEL_WIDTH
-        val width = max(
-            MIN_PANEL_WIDTH,
-            min(parentWidth / 4, MAX_PANEL_WIDTH)
-        )
-        // Height is determined by content; delegate to backgroundPanel
-        val height = backgroundPanel.preferredSize.height
-        return Dimension(width, height)
+        return Dimension(582, 700)
     }
 
     private fun subscribeToEvents() {
@@ -115,12 +104,12 @@ class LiveScorePanel : JPanel() {
     }
 
     private fun processScores(tickScores: JsonArray) {
-        // Step 1: Extract ranked IDs
+        // Extract ranked IDs
         val newRankedIds = tickScores.mapNotNull {
             it.jsonObject["participantId"]?.jsonPrimitive?.int
         }
 
-        // Step 2: Compute max scores for normalization
+        // Compute max scores for normalization
         val maxScores = mutableMapOf(
             "total" to 1.0,
             "survival" to 1.0,
@@ -142,21 +131,21 @@ class LiveScorePanel : JPanel() {
             updateMax(maxScores, "ramKill", s["ramKillBonus"])
         }
 
-        // Step 3: Build score map
+        // Build score map
         val scoresByParticipantId = tickScores.associateBy {
             it.jsonObject["participantId"]?.jsonPrimitive?.int ?: -1
         }
 
-        // Step 4: Remove panels for participants no longer in ranking
+        // Remove panels for participants no longer in ranking (animate out)
         val panelsToRemove = robotPanels.keys - newRankedIds.toSet()
         panelsToRemove.forEach { id ->
             val panel = robotPanels[id] ?: return@forEach
-            // Animate out to the right before removal
-            val current = panelCurrentPositions[id] ?: Point(0, 0)
+            val current = panelCurrentPositions[id] ?: Point(backgroundPanel.width + SLIDE_IN_OFFSET, 0)
+            // Set target x to off-screen right
             panelTargetPositions[id] = Point(backgroundPanel.width + SLIDE_IN_OFFSET, current.y)
         }
 
-        // Step 5: Update or create panels for current ranked participants
+        // Update or create panels for current ranked participants
         newRankedIds.forEachIndexed { index, participantId ->
             val scoreObj = scoresByParticipantId[participantId] ?: return@forEachIndexed
             val participant = participants[participantId]
@@ -164,11 +153,9 @@ class LiveScorePanel : JPanel() {
 
             val panel = robotPanels.getOrPut(participantId) {
                 val newPanel = RobotScorePanel(participantId)
+                // Add before measuring preferred size
                 backgroundPanel.add(newPanel)
-                // Start off-screen to the right for new entries
-                val start = Point(backgroundPanel.width + SLIDE_IN_OFFSET, 0)
-                panelCurrentPositions[participantId] = start
-                newPanel.setBounds(start.x, start.y, 0, PANEL_HEIGHT) // width set later
+                newPanel.revalidate()
                 newPanel
             }
 
@@ -177,9 +164,6 @@ class LiveScorePanel : JPanel() {
 
         rankedParticipantIds = newRankedIds
         recalculateTargetPositions()
-
-        // Clean up panels that have fully animated out (after animation completes)
-        // We'll do this in animatePanels after movement
     }
 
     private fun updateMax(map: MutableMap<String, Double>, key: String, jsonElement: kotlinx.serialization.json.JsonElement?) {
@@ -194,33 +178,54 @@ class LiveScorePanel : JPanel() {
             return
         }
 
-        val containerWidth = backgroundPanel.width.coerceAtLeast(MIN_PANEL_WIDTH)
+        val containerWidth = (backgroundPanel.width.takeIf { it > 0 } ?: (parent?.width ?: MIN_PANEL_WIDTH)).coerceAtLeast(MIN_PANEL_WIDTH)
         val panelWidth = max(
             MIN_PANEL_WIDTH,
-            min(containerWidth - 20, MAX_PANEL_WIDTH)
+            min(containerWidth - 40, MAX_PANEL_WIDTH)
         )
         val startX = (containerWidth - panelWidth) / 2
 
-        var currentY = INTERVAL
+        // Compute per-panel heights using preferredSize
+        val panelHeights = rankedParticipantIds.map { id ->
+            val p = robotPanels[id]
+            val h = p?.preferredSize?.height ?: (getDefaultPanelHeight())
+            h
+        }
+
+        val totalPanelHeight = panelHeights.sum() + INTERVAL * (panelHeights.size - 1)
+        val availableHeight = backgroundPanel.parent?.height ?: totalPanelHeight
+        val startY = max(INTERVAL, (availableHeight - totalPanelHeight) / 2)
+
+        var currentY = startY
+
         val activeIds = mutableSetOf<Int>()
 
-        rankedParticipantIds.forEach { id ->
-            val targetY = currentY
-            val targetPos = Point(startX, targetY)
+        rankedParticipantIds.forEachIndexed { idx, id ->
+            val h = panelHeights.getOrNull(idx) ?: getDefaultPanelHeight()
+            val targetPos = Point(startX, currentY)
             panelTargetPositions[id] = targetPos
             activeIds.add(id)
 
-            // Ensure new panels have correct initial Y if just created
+            // If no current pos, set it off-screen right (for slide-in)
             if (!panelCurrentPositions.containsKey(id)) {
-                panelCurrentPositions[id] = Point(containerWidth + SLIDE_IN_OFFSET, targetY)
+                panelCurrentPositions[id] = Point(containerWidth + SLIDE_IN_OFFSET, currentY)
             }
 
-            currentY += PANEL_HEIGHT + INTERVAL
+            // Ensure panel bounds reflect computed width/height immediately so scrollbars and painting are correct
+            robotPanels[id]?.let { panel ->
+                panel.setBounds(panelCurrentPositions[id]!!.x, panelCurrentPositions[id]!!.y, panelWidth, h)
+            }
+
+            currentY += h + INTERVAL
         }
 
-        // Update background height
-        val totalHeight = currentY
-        backgroundPanel.preferredSize = Dimension(containerWidth, totalHeight)
+        // Remove any leftover target positions for panels not active
+        val removed = panelTargetPositions.keys - activeIds
+        removed.forEach { k -> panelTargetPositions.remove(k) }
+
+        // Set background content size
+        val contentHeight = max(totalPanelHeight, availableHeight)
+        backgroundPanel.preferredSize = Dimension(containerWidth, contentHeight)
         backgroundPanel.revalidate()
 
         if (!animationTimer.isRunning) {
@@ -228,10 +233,15 @@ class LiveScorePanel : JPanel() {
         }
     }
 
+    private fun getDefaultPanelHeight(): Int {
+        // Fallback height when preferred is unavailable
+        return 52
+    }
+
     private fun animatePanels() {
         var allInPlace = true
         val containerWidth = backgroundPanel.width.coerceAtLeast(MIN_PANEL_WIDTH)
-        val panelWidth = max(MIN_PANEL_WIDTH, min(containerWidth - 20, MAX_PANEL_WIDTH))
+        val panelWidth = max(MIN_PANEL_WIDTH, min(containerWidth - 40, MAX_PANEL_WIDTH))
 
         val toRemove = mutableListOf<Int>()
 
@@ -239,23 +249,24 @@ class LiveScorePanel : JPanel() {
             val current = panelCurrentPositions[id] ?: return@forEach
             val target = panelTargetPositions[id]
 
+            val panelHeight = panel.preferredSize.height.takeIf { it > 0 } ?: getDefaultPanelHeight()
+
             if (target == null) {
-                // This panel is being removed — animate out to the right
+                // Animate out to the right
                 val newX = (current.x + (containerWidth + SLIDE_IN_OFFSET - current.x) * ANIMATION_SPEED).roundToInt()
-                panel.setBounds(newX, current.y, panelWidth, PANEL_HEIGHT)
+                panel.setBounds(newX, current.y, panelWidth, panelHeight)
                 panelCurrentPositions[id] = Point(newX, current.y)
 
-                // If fully off-screen, mark for removal
                 if (newX >= containerWidth + SLIDE_IN_OFFSET - 5) {
                     toRemove.add(id)
                 }
                 allInPlace = false
             } else {
-                // Normal animation toward target
+                // Move toward target
                 val newX = (current.x + (target.x - current.x) * ANIMATION_SPEED).roundToInt()
                 val newY = (current.y + (target.y - current.y) * ANIMATION_SPEED).roundToInt()
 
-                panel.setBounds(newX, newY, panelWidth, PANEL_HEIGHT)
+                panel.setBounds(newX, newY, panelWidth, panelHeight)
                 panelCurrentPositions[id] = Point(newX, newY)
 
                 if (newX != target.x || newY != target.y) {
@@ -264,7 +275,7 @@ class LiveScorePanel : JPanel() {
             }
         }
 
-        // Remove panels that have slid out
+        // Remove fully slid out panels
         toRemove.forEach { id ->
             robotPanels.remove(id)?.let { panel ->
                 backgroundPanel.remove(panel)
@@ -277,6 +288,7 @@ class LiveScorePanel : JPanel() {
             animationTimer.stop()
         }
 
+        backgroundPanel.revalidate()
         backgroundPanel.repaint()
     }
 

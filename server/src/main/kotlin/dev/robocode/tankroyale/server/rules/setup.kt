@@ -31,4 +31,4 @@ val DEFAULT_TURN_TIMEOUT = 5.milliseconds
 val DEFAULT_READY_TIMEOUT = 1.seconds
 
 /** Default turns per second (TPS) */
-const val DEFAULT_TURNS_PER_SECOND = 30
+const val DEFAULT_TURNS_PER_SECOND = 15

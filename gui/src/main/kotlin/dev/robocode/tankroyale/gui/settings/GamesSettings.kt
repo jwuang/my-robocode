@@ -28,7 +28,7 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
                 isTurnTimeoutLocked = false,
                 readyTimeout = 1_000_000, // 1,000,000 microseconds = 1 second
                 isReadyTimeoutLocked = false,
-                defaultTurnsPerSecond = 30
+                defaultTurnsPerSecond = 15
             ),
             GameType.CLASSIC.displayName to GameSetup(
                 gameType = GameType.CLASSIC.displayName,
@@ -50,7 +50,7 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
                 isTurnTimeoutLocked = false,
                 readyTimeout = 1_000_000, // 1,000,000 microseconds = 1 second
                 isReadyTimeoutLocked = false,
-                defaultTurnsPerSecond = 30
+                defaultTurnsPerSecond = 15
             ),
             GameType.MELEE.displayName to GameSetup(
                 gameType = GameType.MELEE.displayName,
@@ -72,7 +72,7 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
                 isTurnTimeoutLocked = false,
                 readyTimeout = 1_000_000, // 1,000,000 microseconds = 1 second
                 isReadyTimeoutLocked = false,
-                defaultTurnsPerSecond = 30
+                defaultTurnsPerSecond = 15
             ),
             GameType.ONE_VS_ONE.displayName to GameSetup(
                 gameType = GameType.ONE_VS_ONE.displayName,
@@ -94,7 +94,7 @@ object GamesSettings : PropertiesStore("Robocode Games Setups", "game-setups.pro
                 isTurnTimeoutLocked = false,
                 readyTimeout = 1_000_000, // 1,000,000 microseconds = 1 second
                 isReadyTimeoutLocked = false,
-                defaultTurnsPerSecond = 30
+                defaultTurnsPerSecond = 15
             )
         )
 

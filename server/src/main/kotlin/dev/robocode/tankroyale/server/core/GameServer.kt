@@ -209,6 +209,8 @@ class GameServer(
         sendGameStartedToObservers()
         prepareModelUpdater()
         resetTurnTimeout()
+
+        handlePauseGame()
     }
 
     /** Send GameStarted to all participant observers to get them started */
