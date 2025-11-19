@@ -76,6 +76,12 @@ class ModelUpdater(
     /** Inactivity counter */
     private var inactivityCounter = 0
 
+    /** Explosion animation delay counter - tracks turns since last bot died to allow animations to complete */
+    private var explosionDelayCounter = 0
+
+    /** Number of turns to wait after last bot dies to allow explosion animation to complete */
+    private val EXPLOSION_ANIMATION_DELAY = 50
+
     /** The accumulated results ordered with higher total scores first */
     internal fun getResults() = accumulatedScoreCalculator.getScores()
 
@@ -134,6 +140,7 @@ class ModelUpdater(
         botsMap.clear()
         scoreTracker.clear()
         inactivityCounter = 0
+        explosionDelayCounter = 0
         initializeBotStates()               // 修改机器人随即出生地点，避免与墙体碰撞
     }
 
@@ -1206,8 +1213,15 @@ class ModelUpdater(
         // distinctBy(id) is necessary to take account for both bots and teams
         val aliveCount = getBotsOrTeams(MutableBot::isAlive).distinctBy { it.id }.count()
         if (aliveCount <= 1) {
-            true
+            // When only 0 or 1 bots remain alive, start the explosion delay counter
+            explosionDelayCounter++
+            
+            // Wait for explosion animation to complete before ending the round
+            explosionDelayCounter >= EXPLOSION_ANIMATION_DELAY
         } else {
+            // Reset the counter when there are still multiple bots alive
+            explosionDelayCounter = 0
+            
             if (bullets.size > 0) {
                 false
             } else {
