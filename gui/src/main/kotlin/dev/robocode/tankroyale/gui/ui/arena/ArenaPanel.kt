@@ -302,7 +302,7 @@ object ArenaPanel : JPanel() {
 
 
     private fun drawBots(g: Graphics2D) {
-        bots.forEach { bot ->
+        bots.filter { it.energy > 0 }.forEach { bot ->
             Tank(bot).paint(g)
             drawScanArc(g, bot)
             drawEnergy(g, bot)
