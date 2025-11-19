@@ -52,6 +52,9 @@ object ArenaPanel : JPanel() {
 
 
     private val explosions = CopyOnWriteArrayList<Animation>()
+    
+    // Track when bot explosions will finish: botId -> turn when explosion animation ends
+    private val botExplosionEndTime = mutableMapOf<Int, Int>()
 
     private var arenaWidth: Int = Client.currentGameSetup?.arenaWidth ?: 1200
     private var arenaHeight: Int = Client.currentGameSetup?.arenaHeight ?: 1200
@@ -118,6 +121,8 @@ object ArenaPanel : JPanel() {
             synchronized(explosions) {
                 explosions.clear()
             }
+            // Clear bot explosion tracking from previous rounds
+            botExplosionEndTime.clear()
         }
 
         round = tickEvent.roundNumber
@@ -158,6 +163,8 @@ object ArenaPanel : JPanel() {
         synchronized(explosions) {
             explosions.add(explosion)
         }
+        // Track when this bot's explosion animation will finish (period = 50 turns)
+        botExplosionEndTime[botDeathEvent.victimId] = time + 50
     }
 
     private fun onBulletHitBot(bulletHitBotEvent: BulletHitBotEvent) {
@@ -303,6 +310,14 @@ object ArenaPanel : JPanel() {
 
     private fun drawBots(g: Graphics2D) {
         bots.forEach { bot ->
+            // Don't draw dead bots whose explosion animation has finished
+            if (bot.energy <= 0) {
+                val explosionEndTime = botExplosionEndTime[bot.id]
+                if (explosionEndTime == null || time >= explosionEndTime) {
+                    return@forEach // Skip this bot
+                }
+            }
+            // Draw the bot (either alive or still exploding)
             Tank(bot).paint(g)
             drawScanArc(g, bot)
             drawEnergy(g, bot)
