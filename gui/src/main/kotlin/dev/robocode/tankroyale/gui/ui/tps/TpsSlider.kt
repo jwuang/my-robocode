@@ -13,23 +13,23 @@ object TpsSlider : RcSlider() {
 
     init {
         minimum = 0
-        maximum = 45
+        maximum = 9
 
         paintLabels = true
         paintTicks = true
-        majorTickSpacing = 5
+        majorTickSpacing = 1
 
         labelTable= Hashtable<Int, JLabel>().apply {
             this[0] = JLabel("0")
-            this[5] = JLabel("5")
-            this[10] = JLabel("10")
-            this[15] = JLabel("15")
-            this[20] = JLabel("30")
-            this[25] = JLabel("50")
-            this[30] = JLabel("100")
-            this[35] = JLabel("200")
-            this[40] = JLabel("500")
-            this[45] = JLabel("max")
+            this[1] = JLabel("5")
+            this[2] = JLabel("10")
+            this[3] = JLabel("15")
+            this[4] = JLabel("20")
+            this[5] = JLabel("25")
+            this[6] = JLabel("30")
+            this[7] = JLabel("40")
+            this[8] = JLabel("60")
+            this[9] = JLabel("max")
         }
 
         val size = preferredSize
@@ -46,27 +46,36 @@ object TpsSlider : RcSlider() {
     }
 
     private fun getTps(): Int {
-        if (value <= 15) return value // 0 - 15
-        if (value <= 20) return 15 + (value - 15) * 3 // 15 - 30
-        if (value <= 25) return 30 + (value - 20) * 4 // 30 - 50
-        if (value <= 30) return 50 + (value - 25) * 10 // 50 - 100
-        if (value <= 35) return 100 + (value - 30) * 20 // 100 - 200
-        if (value <= 40) return 200 + (value - 35) * 60 // 200 - 500
-        if (value <= 44) return 500 + (value - 40) * 100 // 500 - 800
-        return -1 // maximum
+        return when (value) {
+            0 -> 0
+            1 -> 5
+            2 -> 10
+            3 -> 15
+            4 -> 20
+            5 -> 25
+            6 -> 30
+            7 -> 40
+            8 -> 60
+            9 -> -1  // maximum
+            else -> 20  // default fallback
+        }
     }
 
     private fun setTps(tps: Int) {
         require(tps in -1..999) { "tps must be in the range -1..999" }
-        value = when {
-            tps < 0 -> maximum
-            tps <= 15 -> tps // 0 - 15
-            tps <= 30 -> 15 + (tps - 15) / 3 // 15 - 30
-            tps <= 50 -> 20 + (tps - 30) / 4 // 30 - 50
-            tps <= 100 -> 25 + (tps - 50) / 10 // 50 - 100
-            tps <= 200 -> 30 + (tps - 100) / 20 // 100 - 200
-            tps <= 500 -> 35 + (tps - 200) / 60 // 200 - 500
-            else -> 40 + (tps - 500) / 100 // 500 - 999
+        value = when (tps) {
+            -1 -> 9  // max
+            0 -> 0
+            in 1..4 -> 0  // round to 0
+            in 5..7 -> 1  // round to 5
+            in 8..12 -> 2  // round to 10
+            in 13..17 -> 3  // round to 15
+            in 18..22 -> 4  // round to 20
+            in 23..27 -> 5  // round to 25
+            in 28..34 -> 6  // round to 30
+            in 35..49 -> 7  // round to 40
+            in 50..999 -> 8  // round to 60
+            else -> 4  // default to 20
         }
     }
 
