@@ -19,6 +19,11 @@ import java.awt.EventQueue
 import java.awt.FlowLayout
 import javax.swing.JButton
 import javax.swing.JPanel
+import java.awt.event.ActionEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.AbstractAction
+import javax.swing.KeyStroke
 
 object ControlPanel : JPanel() {
 
@@ -107,6 +112,18 @@ object ControlPanel : JPanel() {
         EventQueue.invokeLater {
             setDefaultButton(pauseResumeButton)
         }
+
+        val togglePauseAction = object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent?) {
+                if (pauseResumeButton.isEnabled) {
+                    pauseResumeButton.doClick()
+                }
+            }
+        }
+        val inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW)
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, 0), "togglePause")
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.SHIFT_DOWN_MASK), "togglePause")
+        actionMap.put("togglePause", togglePauseAction)
     }
 
     private fun enablePauseResumeAndStopButtons(enable: Boolean = true) {
